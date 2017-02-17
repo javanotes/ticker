@@ -1,0 +1,50 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+        	url 'http://cvs.apache.org/maven-snapshot-repository'
+    	}
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.2.RELEASE")
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+jar {
+    baseName = 'ticker-platform'
+    version =  '0.1'
+}
+
+repositories {
+    mavenCentral()
+    
+    maven {
+        url 'http://cvs.apache.org/maven-snapshot-repository'
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+
+	compile("org.springframework.boot:spring-boot-starter")
+	
+	compile group: 'com.strategicgains', name: 'RestExpress', version: '0.11.3'
+	compile group: 'com.typesafe.akka', name: 'akka-actor_2.11', version: '2.4.16'
+	compile 'com.lmax:disruptor:3.3.6'
+	
+    compile('com.hazelcast:hazelcast:3.7.5')
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile("org.springframework.boot:spring-boot-starter-web"){
+    	exclude module:"spring-boot-starter-tomcat"
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+}
