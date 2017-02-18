@@ -17,6 +17,7 @@ package org.reactivetechnologies.ticker.messaging;
 
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.actors.ActorSystemConfiguration;
+import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.DefaultPublisher;
 import org.reactivetechnologies.ticker.messaging.base.ItemPartKeyGenerator;
 import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
@@ -43,5 +44,16 @@ public class MessagingConfiguration {
 	{
 		return new RingBufferedQueueContainer(hazelWrap);
 	}
-	
+	@Bean
+	DeadLetterHandler deadLetter()
+	{
+		return new DeadLetterHandler() {
+			
+			@Override
+			public void handle(Data d) {
+				// TODO override and implement
+				System.out.println("new DeadLetterHandler() {...}.handle()");
+			}
+		};
+	}
 }

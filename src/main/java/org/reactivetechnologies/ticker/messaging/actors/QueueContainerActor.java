@@ -23,8 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.QueueContainer;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
+import org.reactivetechnologies.ticker.messaging.dto.Consumable;
 import org.reactivetechnologies.ticker.messaging.dto.__RegistrationRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RunRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__StopRequest;
@@ -45,6 +47,8 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 
 	private static final Logger log = LoggerFactory.getLogger(QueueContainerActor.class);
 	MessagingContainerSupport migrationListener;
+	DeadLetterHandler deadLetterHandler;
+	
 	private final HazelcastOperations hazelWrap;
 	private static SupervisorStrategy strategy = new OneForOneStrategy(10, Duration.apply(1, TimeUnit.MINUTES),
 			new Function<Throwable, SupervisorStrategy.Directive>() {
@@ -102,10 +106,18 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 			}
 			getSender().tell(!awaitingStop, getSelf());
 		}
+		else if(message instanceof Consumable)
+		{
+			recordDeadLetter((Consumable) message);
+		}
 		else
 			unhandled(message);
 	}
 
+	private void recordDeadLetter(Consumable message) {
+		if(deadLetterHandler != null)
+			deadLetterHandler.handle(message.data);
+	}
 	private final Object stopWaitMutex = new Object();
 	private volatile boolean awaitingStop;
 

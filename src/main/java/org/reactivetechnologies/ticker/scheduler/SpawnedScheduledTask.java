@@ -16,7 +16,11 @@
 package org.reactivetechnologies.ticker.scheduler;
 
 import java.util.Date;
-
+/**
+ * @experimental
+ * @author esutdal
+ *
+ */
 public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 
 	/**

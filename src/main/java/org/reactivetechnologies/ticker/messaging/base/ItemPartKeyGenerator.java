@@ -15,10 +15,15 @@
  */
 package org.reactivetechnologies.ticker.messaging.base;
 
+import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.hazelcast.util.UuidUtil;
 
 public class ItemPartKeyGenerator {
 
+	@Autowired
+	HazelcastOperations hazelOps;
 	//TODO: key generation strategy
 	/**
 	 * Get the next partitioning key for distributing queue item.
@@ -27,5 +32,14 @@ public class ItemPartKeyGenerator {
 	public String getNext()
 	{
 		return UuidUtil.createClusterUuid();
+	}
+	/**
+	 * Get the next partitioning key for distributing queue item.
+	 * @param key queue name
+	 * @return
+	 */
+	public long getNext(String key)
+	{
+		return hazelOps.hazelcastInstance().getIdGenerator(key).newId();
 	}
 }

@@ -30,7 +30,7 @@ public class DefaultPublisher implements Publisher {
 		this.hazelWrap = hazelWrap;
 	}
 
-	private IMap<String, Data> getMap(Data d)
+	private IMap<Long, Data> getMap(Data d)
 	{
 		Assert.isTrue(StringUtils.hasText(d.getDestination()), "'destination' not provided in Data");
 		return hazelWrap.getMap(d.getDestination());
@@ -41,13 +41,13 @@ public class DefaultPublisher implements Publisher {
 	ItemPartKeyGenerator keyGen;
 	@Override
 	public <E extends Data> boolean offer(E item) {
-		getMap(item).set(keyGen.getNext(), item);
+		getMap(item).set(keyGen.getNext(item.getDestination()), item);
 		return true;
 	}
 
 	@Override
 	public <E extends Data> ICompletableFuture<Void> ingest(E item) {
-		ICompletableFuture<Void> ret = getMap(item).setAsync(keyGen.getNext(), item);
+		ICompletableFuture<Void> ret = getMap(item).setAsync(keyGen.getNext(item.getDestination()), item);
 		return ret;
 	}
 	

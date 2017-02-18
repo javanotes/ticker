@@ -23,6 +23,7 @@ import javax.annotation.PreDestroy;
 import org.reactivetechnologies.ticker.datagrid.HazelcastConfiguration;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.ItemPartKeyGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +149,7 @@ public class ActorSystemConfiguration {
 	public static class ContainerCreator implements Creator<QueueContainerActor>
 	{
 		@Autowired MessagingContainerSupport migrListener;
+		@Autowired DeadLetterHandler dlHandler;
 		@Autowired
 		HazelcastOperations ops;
 		@Value("${container.clear_all_pending:false}")
@@ -165,6 +167,7 @@ public class ActorSystemConfiguration {
 			qc.setClearAllPendingEntries(clearAllPendingEntries);
 			qc.setRemoveImmediate(removeImmediate);
 			qc.migrationListener = migrListener;
+			qc.deadLetterHandler = dlHandler;
 			return qc;
 		}
 		

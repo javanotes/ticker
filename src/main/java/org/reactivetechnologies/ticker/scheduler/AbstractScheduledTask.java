@@ -30,8 +30,10 @@ import org.springframework.util.Assert;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 /**
- * The base class for creating scheduled tasks. This class will be passed a {@linkplain TaskContext} on each run.
+ * The base class to extend for creating scheduled tasks. This class will be passed a {@linkplain TaskContext} on each run.
  * @author esutdal
+ * @see #scheduleTimeunit()
+ * @see #scheduleLockExpiryMilis()
  *
  */
 public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledRunnable {
@@ -139,9 +141,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		{
 			log.error("Scheduler execution exception logged", e);
 		}
-		finally {
-			releaseLock();
-		}
+		
 	}
 	
 	@Override
@@ -153,7 +153,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 				run0(); 
 			}
 			else
-				log.warn("Did not acquire this run mutex");
+				log.info("Did not acquire this run distributed mutex");
 		} 
 		catch (HazelcastInstanceNotActiveException e) {
 			log.error("Hazelcast unavailable. "
@@ -176,26 +176,27 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	static final Integer KEY = 1;
 	
 	/**
-	 * Release cluster lock.
-	 */
-	private void releaseLock() {
-		IMap<String, byte[]> map = scheduler.getHazelcastOps().getMap(getClass().getName());
-		map.remove(timestampKey);
-		markUnlocked();
-	}
-	private void markUnlocked() {
-		setInLockingState(false);
-	}
-	/**
 	 * The lowest denomination of {@linkplain TimeUnit} till which uniqueness of job execution is guaranteed.
-	 * Can be HOUR or MINUTE or SECOND. Can be overridden by subclasses to provide a more coarse grained unit.
+	 * Can be HOUR or MINUTE or SECOND. Should be implemented by subclasses. <p><b>Note:</b> Specifying a correct unit is crucial
+	 * since a timestamp pattern based on this unit will be used to acquire a unique scheduler run, without using
+	 * any distributed clock synchronizing technique.
 	 * @return
 	 */
 	protected abstract TimeUnit scheduleTimeunit();
+	/**
+	 * Time in milliseconds, for which an acquired schedule will be locked exclusively. Implies, another instance which has a lagging system clock
+	 * might have the possibility of rerunning a schedule. To avoid this, the value should be chosen with sufficient buffer for such time lag. <p>Default is 10 minutes.
+	 * <b>Thus we are assuming that a maximum clock lag between any 2 instances in the cluster will not be more than 10 minutes.</b> 
+	 * Override the value as required.
+	 * @return
+	 */
+	protected long scheduleLockExpiryMilis()
+	{
+		return TimeUnit.MINUTES.toMillis(10);
+	}
 	private String getTimestampKey()
 	{
 		Clock clock = scheduler.getClusterClock();
-		//clock.setTimestamp(trigger.getNextExecutionTime().getTime()+scheduler.getClockOffset());
 		clock.setTimestamp(trigger.getNextExecutionTime().getTime());
 		return clock.toTimestampString(scheduleTimeunit());
 	}
@@ -211,7 +212,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		IMap<String, byte[]> map = scheduler.getHazelcastOps().getMap(getClass().getName());
 		map.lock(timestampKey);
 		try {
-			return map.putIfAbsent(timestampKey, VALUE) == null;
+			return map.putIfAbsent(timestampKey, VALUE, scheduleLockExpiryMilis(), TimeUnit.MILLISECONDS) == null;
 		} finally {
 			map.unlock(timestampKey);
 		}

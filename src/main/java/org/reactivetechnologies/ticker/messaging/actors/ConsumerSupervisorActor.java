@@ -99,8 +99,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * @param msg
 	 */
 	private void rollbackDelivery(Consumable msg) {
-		//TODO: message retry scheme??
-		
+		getContext().parent().tell(msg, getSelf());
 	}
 
 	private volatile String listnrRegId;
