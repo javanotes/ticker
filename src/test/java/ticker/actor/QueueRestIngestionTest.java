@@ -24,8 +24,8 @@ public class QueueRestIngestionTest {
 	
 	TestRestTemplate rest = new TestRestTemplate();
 	
-	private final int iteration = 100;
-	private final int connThreads = 1;
+	private final int iteration = SimpleQueueListener.NO_OF_MESSAGES;
+	private final int connThreads = 10;
 	
 	@Before
 	public void pre()

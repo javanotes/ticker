@@ -127,9 +127,10 @@ final class HazelcastClusterListener extends Observable implements MigrationList
     
   }
 
+  //detects that the owner failed before the backup node completes the sync process and issues a partition lost event.
   @Override
   public void partitionLost(PartitionLostEvent event) {
-    log.warn("### PartitionLost ### "+event);
+    log.warn(""+event);
   }
 
   @Override

@@ -37,7 +37,7 @@ class RestServer extends RestExpress {
 	public static final String URL_VAL_QNAME = "queue";
 	public static final String URL_ADD = "/add/{"+URL_VAL_QNAME+"}";
 	public static final String URL_APPEND = "/append/{"+URL_VAL_QNAME+"}";
-	public static final String URL_INGEST = "/append/{"+URL_VAL_QNAME+"}";
+	public static final String URL_INGEST = "/ingest/{"+URL_VAL_QNAME+"}";
 
 	@Value("${server.port-offset:100}")
 	private int portOffset;
