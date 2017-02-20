@@ -16,7 +16,18 @@
 package org.reactivetechnologies.ticker.messaging.base;
 
 import org.reactivetechnologies.ticker.messaging.Data;
-
+/**
+ * Strategy class for handling message retry.
+ * @author esutdal
+ *
+ */
 public interface DeadLetterHandler {
-	void handle(Data d);
+	
+	/**
+	 * Handle the failed {@linkplain Data}. Return true if the message is to be retried delivery.
+	 * @param data a serialized copy of the original data
+	 * @param deliveryCount
+	 * @return boolean
+	 */
+	boolean handle(Data data, int deliveryCount);
 }

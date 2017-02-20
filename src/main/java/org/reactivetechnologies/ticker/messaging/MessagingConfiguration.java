@@ -20,12 +20,10 @@ import org.reactivetechnologies.ticker.messaging.actors.ActorSystemConfiguration
 import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.DefaultPublisher;
 import org.reactivetechnologies.ticker.messaging.base.ItemPartKeyGenerator;
-import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-@SuppressWarnings("deprecation")
 @Configuration
 @Import(ActorSystemConfiguration.class)
 public class MessagingConfiguration {
@@ -40,19 +38,20 @@ public class MessagingConfiguration {
 	{
 		return new ItemPartKeyGenerator();
 	}
-	RingBufferedQueueContainer ringBuffQueueContainer(HazelcastOperations hazelWrap)
+	/*RingBufferedQueueContainer ringBuffQueueContainer(HazelcastOperations hazelWrap)
 	{
 		return new RingBufferedQueueContainer(hazelWrap);
-	}
+	}*/
 	@Bean
 	DeadLetterHandler deadLetter()
 	{
 		return new DeadLetterHandler() {
 			
 			@Override
-			public void handle(Data d) {
+			public boolean handle(Data data, int deliveryCount) {
 				// TODO override and implement
 				System.out.println("new DeadLetterHandler() {...}.handle()");
+				return false;
 			}
 		};
 	}

@@ -15,6 +15,7 @@
  */
 package org.reactivetechnologies.ticker.messaging.actors;
 
+import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -27,14 +28,17 @@ import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.QueueContainer;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RegistrationRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RunRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__StopRequest;
+import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
+import akka.actor.ActorRef;
 import akka.actor.OneForOneStrategy;
 import akka.actor.Props;
 import akka.actor.SupervisorStrategy;
@@ -46,6 +50,7 @@ import scala.concurrent.duration.Duration;
 class QueueContainerActor extends UntypedActor implements QueueContainer {
 
 	private static final Logger log = LoggerFactory.getLogger(QueueContainerActor.class);
+	
 	MessagingContainerSupport migrationListener;
 	DeadLetterHandler deadLetterHandler;
 	
@@ -113,10 +118,21 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 		else
 			unhandled(message);
 	}
-
-	private void recordDeadLetter(Consumable message) {
+	/**
+	 * Delegate the message rollback strategy to a {@linkplain DeadLetterHandler}.
+	 * @param message
+	 * @throws IOException 
+	 */
+	private void recordDeadLetter(Consumable message) throws IOException {
 		if(deadLetterHandler != null)
-			deadLetterHandler.handle(message.data);
+		{
+			Consumable consume = message.increment();
+			boolean retry = deadLetterHandler.handle(CommonHelper.deepCopy(consume.data), consume.deliveryCount);
+			if(retry)
+			{
+				((ActorRef) consumerActors.get(message.data.getDestination())).tell(new __EntryRequest(consume), getSelf());
+			}
+		}
 	}
 	private final Object stopWaitMutex = new Object();
 	private volatile boolean awaitingStop;
@@ -169,12 +185,14 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 		if(!notRegistered)
 			register0(listener);
 	}
-	private<T extends Data> void register0(QueueListener<T> listener) {
-		Props listenerProp = ConsumerSupervisorActor.newProps(listener, hazelWrap.hazelcastInstance(), isClearAllPendingEntries(), isRemoveImmediate());
+
+	private <T extends Data> void register0(QueueListener<T> listener) {
+		Props listenerProp = ConsumerSupervisorActor.newProps(listener, hazelWrap.hazelcastInstance(),
+				isClearAllPendingEntries(), isRemoveImmediate(), isCheckExclusiveAccess());
 		consumerActors.replace(listener.routing(), listenerMapValue, listenerProp);
 	}
 
-
+	private boolean checkExclusiveAccess;
 	@Override
 	public <T extends Data> void register(QueueListener<T> listener) {
 		//there should be only one listener per queue, per instance. Or else there will be multiple Hazelcast
@@ -211,6 +229,16 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 
 	public void setRemoveImmediate(boolean removeImmediate) {
 		this.removeImmediate = removeImmediate;
+	}
+
+
+	public boolean isCheckExclusiveAccess() {
+		return checkExclusiveAccess;
+	}
+
+
+	public void setCheckExclusiveAccess(boolean checkExclusiveAccess) {
+		this.checkExclusiveAccess = checkExclusiveAccess;
 	}
 
 }

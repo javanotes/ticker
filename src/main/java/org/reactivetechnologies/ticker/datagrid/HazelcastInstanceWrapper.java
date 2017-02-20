@@ -41,7 +41,8 @@ class HazelcastInstanceWrapper {
 	static final String HZ_MAP_SERVICE = "hz:impl:mapService";
 	public static final String NODE_INSTANCE_ID = "keyval.hazelcast.id";
 	
-	public static final String HZ_GROUP_NAME = "TickerCluster";
+	public static final String HZ_GROUP_NAME = "Ticker";
+	public static final String HZ_GROUP_PWD = "@dmIn123#";
 	
 	private final HazelcastProperties hazelcastProperties;
 	
@@ -74,6 +75,8 @@ class HazelcastInstanceWrapper {
 	private void setInstanceId(Config hzConfig)
 	{
 		hzConfig.getGroupConfig().setName(HZ_GROUP_NAME);
+		hzConfig.getGroupConfig().setPassword(HZ_GROUP_PWD);
+		
 		hzConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
 		if(StringUtils.hasText(instanceId))
 		{

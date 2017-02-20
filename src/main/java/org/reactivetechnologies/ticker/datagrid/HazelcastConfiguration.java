@@ -28,14 +28,11 @@ SOFTWARE.
 */
 package org.reactivetechnologies.ticker.datagrid;
 
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
 import org.springframework.boot.autoconfigure.hazelcast.HazelcastProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@EnableAutoConfiguration(exclude = {HazelcastAutoConfiguration.class})
 @EnableConfigurationProperties(HazelcastProperties.class)
 @Configuration
 public class HazelcastConfiguration {

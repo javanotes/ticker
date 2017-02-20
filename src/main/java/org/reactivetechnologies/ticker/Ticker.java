@@ -16,14 +16,14 @@
 package org.reactivetechnologies.ticker;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {HazelcastAutoConfiguration.class})
 public class Ticker {
 	
 	public static void main(String[] args) {
 		new SpringApplicationBuilder(Ticker.class)
-		//.bannerMode(Mode.OFF)
 		.build().run(args);
 
 	}

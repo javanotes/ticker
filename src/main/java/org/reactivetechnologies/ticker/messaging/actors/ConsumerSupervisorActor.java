@@ -53,7 +53,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 
 	private static final Logger log = LoggerFactory.getLogger(ConsumerSupervisorActor.class);
 	private ActorRef workerPool;
-	private boolean clearAll, removeImmediate;
+	private boolean clearAll, removeImmediate, checkExclusiveAccess;
 	
 	private final QueueListener<T> listener;
 	private final HazelcastInstance hazelcast;
@@ -79,11 +79,12 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * @param l
 	 * @param hz
 	 */
-	private ConsumerSupervisorActor(QueueListener<T> l, HazelcastInstance hz, boolean clearAll, boolean removeImmediate) {
+	private ConsumerSupervisorActor(QueueListener<T> l, HazelcastInstance hz, boolean clearAll, boolean removeImmediate, boolean checkExclusiveAccess) {
 		this.listener = l;
 		this.hazelcast = hz;
 		this.clearAll = clearAll;
 		this.removeImmediate = removeImmediate;
+		this.checkExclusiveAccess = checkExclusiveAccess;
 		
 		this.queueMap = hazelcast.getMap(listener.routing());
 		workerPool = getContext().actorOf(new BalancingPool(listener.parallelism()).withSupervisorStrategy(strategy)
@@ -95,10 +96,11 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	private final IMap<Serializable, T> queueMap;
 	
 	/**
-	 * Retry message delivery, if applicable.
+	 * Record as a dead letter. A {@linkplain DeadLetterHandler} will have the strategy to reject
+	 * or retry message processing.
 	 * @param msg
 	 */
-	private void rollbackDelivery(Consumable msg) {
+	private void recordDeadLetter(Consumable msg) {
 		getContext().parent().tell(msg, getSelf());
 	}
 
@@ -127,7 +129,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 		for(Object key : clearAll ? queueMap.keySet() : queueMap.localKeySet())
 		{
 			entry = queueMap.get(key);
-			item = new Consumable(entry, false, key.toString());
+			item = new Consumable(entry, false, (Serializable) key);
 			delegateToWorker(item);
 		}
 		log.info("Submitted pending entries with clearAll?"+clearAll);
@@ -170,20 +172,23 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 			unhandled(msg);
 	}
 	/**
-	 * Complete the current consume by removing the entry from Hazelcast.
+	 * Complete the current consume by removing the entry from Hazelcast. This method can be invoked
+	 * from the worker in the same thread as well (bypassing actor flow).
 	 * @param msg
 	 */
-	void endTransaction(Consumable msg) {
+	final void endTransaction(Consumable msg) {
+		
 		if(msg.commit)
 			commitDelivery(msg, msg.isRemoveImmediate());
 		else
-			rollbackDelivery(msg);
+			recordDeadLetter(msg);
+		
 		
 		log.debug("end transaction..");
 	}
 
-	public static <E extends Data> Props newProps(QueueListener<E> listener, HazelcastInstance hazel, boolean clearAll, boolean removeImmediate) {
-		return Props.create(ConsumerSupervisorActor.class, listener, hazel, clearAll, removeImmediate);
+	public static <E extends Data> Props newProps(QueueListener<E> listener, HazelcastInstance hazel, boolean clearAll, boolean removeImmediate, boolean checkExclusiveAccess) {
+		return Props.create(ConsumerSupervisorActor.class, listener, hazel, clearAll, removeImmediate, checkExclusiveAccess);
 	}
 
 	boolean isHazelcastActive()
@@ -206,15 +211,41 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	@Override
 	public void entryAdded(EntryEvent<Serializable, T> event) {
 		log.debug("New entry received:: "+event);
-		delegateToWorker(new Consumable(event.getValue(), false, event.getKey().toString()));
+		delegateToWorker(new Consumable(event.getValue(), false, event.getKey()));
+	}
+	private boolean hasExclusiveAccess(Consumable consumeMessage)
+	{
+		if (checkExclusiveAccess) {
+			queueMap.lock(consumeMessage.key);
+			try {
+				if (consumeMessage.data.getProcessState() == Data.STATE_OPEN) {
+					consumeMessage.data.setProcessState(Data.STATE_LOCKED);
+					return true;
+				}
+			} finally {
+				queueMap.unlock(consumeMessage.key);
+			}
+			return false;
+		}
+		
+		return true;
 	}
 	/**
 	 * Delegate a consumer message to routee for execution.
 	 * @param consumeMessage
 	 */
 	private void delegateToWorker(Consumable consumeMessage) {
-		consumeMessage.setRemoveImmediate(removeImmediate);
-		workerPool.tell(consumeMessage, getSelf());
+		if (hasExclusiveAccess(consumeMessage)) 
+		{
+			consumeMessage.setRemoveImmediate(removeImmediate);
+			workerPool.tell(consumeMessage, getSelf());
+		}
+	}
+	public boolean isCheckExclusiveAccess() {
+		return checkExclusiveAccess;
+	}
+	public void setCheckExclusiveAccess(boolean checkExclusiveAccess) {
+		this.checkExclusiveAccess = checkExclusiveAccess;
 	}
 	
 }

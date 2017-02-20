@@ -15,12 +15,20 @@
  */
 package org.reactivetechnologies.ticker.messaging.dto;
 
+import java.io.Serializable;
+
 import org.reactivetechnologies.ticker.messaging.Data;
 
-public class Consumable
+public class Consumable 
 {
 	private boolean removeImmediate;
-	public Consumable(Data data, boolean commit, String key) {
+	/**
+	 * 
+	 * @param data
+	 * @param commit
+	 * @param key
+	 */
+	public Consumable(Data data, boolean commit, Serializable key) {
 		this(data, commit, key, 0);
 	}
 	public Consumable increment()
@@ -29,9 +37,16 @@ public class Consumable
 	}
 	public final Data data;
 	public final boolean commit;
-	public final String key;
+	public final Serializable key;
 	public final int deliveryCount;
-	public Consumable(Data data, boolean commit, String key, int deliveryCount) {
+	/**
+	 * 
+	 * @param data
+	 * @param commit
+	 * @param key
+	 * @param deliveryCount
+	 */
+	public Consumable(Data data, boolean commit, Serializable key, int deliveryCount) {
 		super();
 		this.data = data;
 		this.commit = commit;
@@ -44,6 +59,5 @@ public class Consumable
 	public void setRemoveImmediate(boolean removeImmediate) {
 		this.removeImmediate = removeImmediate;
 	}
-	
-	
+		
 }

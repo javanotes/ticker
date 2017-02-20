@@ -135,7 +135,7 @@ public abstract class AbstractQueueContainer implements QueueContainer, EntryAdd
 		for(Object key : all ? imap.keySet() : imap.localKeySet())
 		{
 			entry = imap.get(key);
-			item = new Consumable(entry, false, key.toString());
+			item = new Consumable(entry, false, (Serializable) key);
 			onEntryAdded(item);
 		}
 		log.info("Cleared "+(all ? "all " : "local ")+"pending entries for "+mapName);
@@ -143,7 +143,7 @@ public abstract class AbstractQueueContainer implements QueueContainer, EntryAdd
 	}
 	@Override
 	public void entryAdded(EntryEvent<Serializable, Data> event) {
-		onEntryAdded(new Consumable(event.getValue(), false, event.getKey().toString()));
+		onEntryAdded(new Consumable(event.getValue(), false, event.getKey()));
 	}
 	/**
 	 * Callback on new item received. To be implemented by subclass. The callback will

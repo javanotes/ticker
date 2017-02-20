@@ -9,6 +9,10 @@ import com.hazelcast.nio.serialization.DataSerializable;
 import com.hazelcast.util.UuidUtil;
 
 public abstract class Data implements DataSerializable, Serializable{
+	public static final byte STATE_OPEN = 0;
+	public static final byte STATE_LOCKED = 1;
+	public static final byte STATE_PROCESSED = 2;
+	public static final byte STATE_FAILED = -1;
 	/**
 	 * 
 	 */
@@ -20,7 +24,16 @@ public abstract class Data implements DataSerializable, Serializable{
 	private boolean redelivered = false;
 	private long expiryMillis = 0;
 	private short redeliveryCount = 0;
+	private byte processState = STATE_OPEN;
 	
+	public byte getProcessState() {
+		return processState;
+	}
+
+	public void setProcessState(byte processState) {
+		this.processState = processState;
+	}
+
 	private transient boolean addAsync = false;
 	
 	@Override
@@ -32,6 +45,7 @@ public abstract class Data implements DataSerializable, Serializable{
 		out.writeLong(timestamp);
 		out.writeBoolean(redelivered);
 		out.writeShort(redeliveryCount);
+		out.writeByte(processState);
 	}
 
 	@Override
@@ -43,6 +57,7 @@ public abstract class Data implements DataSerializable, Serializable{
 		setTimestamp(in.readLong());
 		setRedelivered(in.readBoolean());
 		setRedeliveryCount(in.readShort());
+		setProcessState(in.readByte());
 	}
 		
 	public String getCorrelationID() {

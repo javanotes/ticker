@@ -15,6 +15,7 @@
  */
 package org.reactivetechnologies.ticker.messaging.actors;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +72,7 @@ public class MessagingContainerSupport extends AbstractMigratedPartitionListener
 	public void onMigratedKeySet(IMap<Object, Object> map, Set<Object> migratedKeySet) {
 		for(Object key : migratedKeySet)
 		{
-			Consumable c = new Consumable((Data) map.get(key), false, key.toString());
+			Consumable c = new Consumable((Data) map.get(key), false, (Serializable) key);
 			containerActor.tell(new __EntryRequest(c), ActorRef.noSender());
 			
 			log.info("Submitted migrated entry for key -> "+key);

@@ -156,6 +156,8 @@ public class ActorSystemConfiguration {
 		private boolean clearAllPendingEntries;
 		@Value("${container.remove_entry_immediate:false}")
 		private boolean removeImmediate;
+		@Value("${container.process_entry_exclusive:false}")
+		private boolean checkExclusiveAccess;
 		/**
 		 * 
 		 */
@@ -166,6 +168,7 @@ public class ActorSystemConfiguration {
 			QueueContainerActor qc = new QueueContainerActor(ops);
 			qc.setClearAllPendingEntries(clearAllPendingEntries);
 			qc.setRemoveImmediate(removeImmediate);
+			qc.setCheckExclusiveAccess(checkExclusiveAccess);
 			qc.migrationListener = migrListener;
 			qc.deadLetterHandler = dlHandler;
 			return qc;
