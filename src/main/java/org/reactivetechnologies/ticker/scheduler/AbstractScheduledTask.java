@@ -176,7 +176,11 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	
 	private void _emit(Data d)
 	{
-		publisher.offer(d);
+		if (d.isAddAsync()) {
+			publisher.ingest(d);
+		}
+		else
+			publisher.offer(d);
 		log.info("Emitted data for reactive processing..");
 	}
 	private void run0()

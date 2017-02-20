@@ -3,11 +3,19 @@ package org.reactivetechnologies.ticker.messaging;
 import java.io.IOException;
 import java.io.Serializable;
 
+
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 import com.hazelcast.util.UuidUtil;
 
+/**
+ * Base class to extend for creating messages which can be submitted to a processing queue in a/sync {@link #setAddAsync(boolean)} mode.
+ * @author esutdal
+ * @see TextData
+ * @see ObjectData
+ * @see ByteData
+ */
 public abstract class Data implements DataSerializable, Serializable{
 	public static final byte STATE_OPEN = 0;
 	public static final byte STATE_LOCKED = 1;
@@ -122,11 +130,18 @@ public abstract class Data implements DataSerializable, Serializable{
 	public void setRedeliveryCount(short redeliveryCount) {
 		this.redeliveryCount = redeliveryCount;
 	}
-
+	/**
+	 * 
+	 * @return
+	 */
 	public boolean isAddAsync() {
 		return addAsync;
 	}
-
+	/**
+	 * Set if the publishing is to be done in a synchronous mode {@linkplain Publisher#offer(Data)} or 
+	 * in an asynchronous mode {@linkplain Publisher#ingest(Data)}.
+	 * @param addAsync
+	 */
 	public void setAddAsync(boolean addAsync) {
 		this.addAsync = addAsync;
 	}
