@@ -29,8 +29,8 @@ import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.AbstractQueueContainer;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
-import org.reactivetechnologies.ticker.messaging.dto.ConsumableEvent;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -161,13 +161,13 @@ public class RingBufferedQueueContainer extends AbstractQueueContainer {
 	}
 
 	@Override
-	protected void onEntryAdded(Consumable consumable) 
+	protected void onEntryAdded(DataWrapper consumable) 
 	{
 		
-		RingBuffer<ConsumableEvent> ringBuffer = buffers.get(consumable.data.getDestination()).getRingBuffer();
+		RingBuffer<DataWrapperEvent> ringBuffer = buffers.get(consumable.data.getDestination()).getRingBuffer();
 		long sequence = ringBuffer.next(); // Grab the next sequence
 		try {
-			ConsumableEvent event = ringBuffer.get(sequence); // Get the entry in
+			DataWrapperEvent event = ringBuffer.get(sequence); // Get the entry in
 			event.setEvent(consumable); // Fill with data
 		} finally {
 			ringBuffer.publish(sequence);

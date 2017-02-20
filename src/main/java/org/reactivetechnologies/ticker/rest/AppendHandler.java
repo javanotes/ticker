@@ -17,6 +17,7 @@ package org.reactivetechnologies.ticker.rest;
 
 import java.io.IOException;
 
+import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.MessageProcessingException;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
 import org.restexpress.Request;
@@ -28,16 +29,29 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 public class AppendHandler extends HandlerBase{
 
 	private static final Logger log = LoggerFactory.getLogger(AppendHandler.class);
-	
+	/**
+	 * Add plain text to a processing queue, from current thread (synchronous) or an asynchronous thread.
+	 * @param queue destination
+	 * @param text plain text to submit
+	 * @param block true, if submitted from this thread
+	 * @return
+	 * @throws JsonProcessingException
+	 * @throws IOException
+	 * @throws MessageProcessingException
+	 */
 	public int addTextToQueue(String queue, String text, boolean block)
 			throws JsonProcessingException, IOException, MessageProcessingException {
 		Assert.isTrue(StringUtils.hasText(text));
 		log.debug("Adding to queue - [" + queue + "] " + text);
 		
-		publish(new TextData(text, queue), block);
+		Data d = new TextData(text, queue);
+		d.setAddAsync(!block);
+		publish(d);
 		
 		return 1;
 	}
@@ -46,6 +60,7 @@ public class AppendHandler extends HandlerBase{
 	protected void doPost(Request request, Response response) throws Exception {
 		RequestBody parsed = parse(request, response);
 		addTextToQueue(parsed.queue, parsed.body, true);
+		response.setResponseStatus(HttpResponseStatus.CREATED);
 	}
 
 }

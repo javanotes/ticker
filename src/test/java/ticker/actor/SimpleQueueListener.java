@@ -1,4 +1,4 @@
-package timekeeper.actor;
+package ticker.actor;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -16,7 +16,7 @@ public class SimpleQueueListener extends AbstractQueueListener<TextData> {
 
 	private CountDownLatch latch;
 	public static final String QNAME = "TEST-QUEUE";
-	public static final int NO_OF_MESSAGES = 100;
+	public static final int NO_OF_MESSAGES = 100000;
 	
 	static final Logger log = LoggerFactory.getLogger(SimpleQueueListener.class);
 

@@ -17,7 +17,6 @@ package org.reactivetechnologies.ticker.scheduler;
 
 import java.util.Date;
 import java.util.TimeZone;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledFuture;
@@ -29,6 +28,7 @@ import javax.annotation.PreDestroy;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperationsFactoryBean;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
+import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
@@ -104,7 +104,7 @@ public class TaskSchedulerImpl implements TaskScheduler {
 		if(intrr)
 			Thread.currentThread().interrupt();
 		
-		log.info("Clock offset: "+clockOffset+" Server Epoch: "+new Date(clusterClock.getTimestamp()));
+		log.info("Clock offset: "+clockOffset+" Cluster Epoch: "+new Date(clusterClock.getTimestamp()));
 	}
 
 	private volatile long clockOffset;
@@ -146,13 +146,13 @@ public class TaskSchedulerImpl implements TaskScheduler {
 	@Override
 	public TaskContext scheduleTask(AbstractScheduledTask task)
 	{
-		TaskContext initialCtx = generateTaskContext();
+		TaskContext initialCtx = task.newTaskContext();
 		task.setTaskKey(initialCtx);
 		DelegatingCronTrigger cronTrigg = new DelegatingCronTrigger(task.cronExpression(), getClusterClock().getZone());
 		ScheduledFuture<?> future = schedule(task, cronTrigg);
 		task.setCancellable(future);
-		task.scheduler = this;
-		task.trigger = cronTrigg;
+		task.setScheduler(this);
+		task.setTrigger(cronTrigg);
 		task.publisher = pub;
 		registry.put(initialCtx.getKeyParam(), task);
 		return initialCtx;
@@ -163,19 +163,15 @@ public class TaskSchedulerImpl implements TaskScheduler {
 	@Override
 	public TaskContext scheduleSingleTask(AbstractScheduledTask task)
 	{
-		TaskContext initialCtx = generateTaskContext();
+		TaskContext initialCtx = task.newTaskContext();
 		task.setTaskKey(initialCtx);
 		ScheduledFuture<?> future = schedule(task, new CronTrigger(task.cronExpression()));
 		task.setCancellable(future);
-		task.scheduler = this;
+		task.setScheduler(this);
 		registry.put(initialCtx.getKeyParam(), task);
 		return initialCtx;
 	}
-	protected static TaskContext generateTaskContext()
-	{
-		TaskContext ctx = new TaskContext(UUID.randomUUID().toString());
-		return ctx;
-	}
+	
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#cancelTask(org.reactivetechnologies.ticker.scheduler.TaskContext, boolean)
 	 */

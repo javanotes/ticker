@@ -44,9 +44,8 @@ public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 	
 	
 	@Override
-	public TaskContext run(TaskContext context) {
+	public void run(TaskContext context) {
 		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - DistributedScheduledTask.run()");
-		return context;
 	}
 	protected SpawnedScheduledTask spawnTask(TaskContext context)
 	{

@@ -1,8 +1,10 @@
-package timekeeper.actor;
+package ticker.actor;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Assert;
@@ -10,40 +12,50 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
+import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
+import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+/**
+ * @deprecated {@linkplain RingBufferedQueueContainer} is experimental.
+ * @author esutdal
+ *
+ */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {Ticker.class})
-public class QueuePublisherOfferingTest {
-
-	static final String INGEST_URL = "http://localhost:8081/ticker/append/"+SimpleQueueListener.QNAME;
+public class QueueListenerDisruptorTest {
+	
+	static final int NO_OF_ITEMS = SimpleQueueListener.NO_OF_MESSAGES;
+	static final int PUB_THREADS = 4;
 	
 	@Autowired
 	Publisher pub;
 	
-	private final int iteration = SimpleQueueListener.NO_OF_MESSAGES;
-	private final int connThreads = 4;
+	@Autowired
+	MessagingContainerSupport containerSupport;
 	
 	@Before
 	public void pre()
 	{
-		
+		testAddToQueue();
 	}
-	@Test
+	
 	public void testAddToQueue()
 	{
 		
 		System.err.println("Starting testAddToQueue........");
-		System.err.println("Iterations => "+iteration);
-		System.err.println("Threads => "+connThreads);
-		ExecutorService ex = Executors.newFixedThreadPool(connThreads);
+		System.err.println("Iterations => "+NO_OF_ITEMS);
+		System.err.println("Threads => "+PUB_THREADS);
+		ExecutorService ex = Executors.newFixedThreadPool(PUB_THREADS);
 		long t = System.currentTimeMillis();
 		AtomicInteger i=new AtomicInteger();
-		for(int j=0; j<connThreads; j++)
+		for(int j=0; j<PUB_THREADS; j++)
 		{
 			ex.submit(new Runnable() {
 				
@@ -63,7 +75,7 @@ public class QueuePublisherOfferingTest {
 						} 
 						idx = i.getAndIncrement();
 					}
-					while(idx < iteration);
+					while(idx < NO_OF_ITEMS);
 				}
 			});
 			
@@ -78,10 +90,28 @@ public class QueuePublisherOfferingTest {
 		System.err.println("End run... Time taken in millis: "+(System.currentTimeMillis()-t));
 		Assert.assertTrue(await);
 		
-		
-		/*Assert.assertEquals(iteration, metrics.getEnqueueCount(SimpleQueueListener.QNAME));
-		Assert.assertEquals(0, metrics.getDequeueCount(SimpleQueueListener.QNAME));
-		Assert.assertEquals(iteration, service.size(SimpleQueueListener.QNAME));*/
 	}
+	
+	
+	static final Logger log = LoggerFactory.getLogger(QueueListenerDisruptorTest.class);
+	@Test
+	public void pollFromQueue() throws TimeoutException
+	{
+		CountDownLatch l = new CountDownLatch(NO_OF_ITEMS);
+		long start = System.currentTimeMillis();
+		containerSupport.registerListener(new SimpleQueueListener(l));
+		containerSupport.start();
 		
+		log.info("Started container run.........................");
+		try {
+			boolean b = l.await(300, TimeUnit.SECONDS);
+			Assert.assertTrue(b);
+		} catch (InterruptedException e) {
+			
+		}
+		
+		long time = System.currentTimeMillis() - start;
+		long secs = TimeUnit.MILLISECONDS.toSeconds(time);
+		log.info("Time taken: " + secs + " secs " + (time - TimeUnit.SECONDS.toMillis(secs)) + " ms");
+	}
 }

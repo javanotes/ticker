@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import org.reactivetechnologies.ticker.datagrid.AbstractMigratedPartitionListener;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RegistrationRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RunRequest;
@@ -72,7 +72,7 @@ public class MessagingContainerSupport extends AbstractMigratedPartitionListener
 	public void onMigratedKeySet(IMap<Object, Object> map, Set<Object> migratedKeySet) {
 		for(Object key : migratedKeySet)
 		{
-			Consumable c = new Consumable((Data) map.get(key), false, (Serializable) key);
+			DataWrapper c = new DataWrapper((Data) map.get(key), false, (Serializable) key);
 			containerActor.tell(new __EntryRequest(c), ActorRef.noSender());
 			
 			log.info("Submitted migrated entry for key -> "+key);

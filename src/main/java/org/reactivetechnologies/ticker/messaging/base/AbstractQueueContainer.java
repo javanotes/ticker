@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,11 +131,11 @@ public abstract class AbstractQueueContainer implements QueueContainer, EntryAdd
 	protected <T extends Data> void processPendingEntries(String mapName, boolean all) {
 		IMap<Serializable, T> imap = hazelWrap.getMap(mapName);
 		T entry;
-		Consumable item;
+		DataWrapper item;
 		for(Object key : all ? imap.keySet() : imap.localKeySet())
 		{
 			entry = imap.get(key);
-			item = new Consumable(entry, false, (Serializable) key);
+			item = new DataWrapper(entry, false, (Serializable) key);
 			onEntryAdded(item);
 		}
 		log.info("Cleared "+(all ? "all " : "local ")+"pending entries for "+mapName);
@@ -143,12 +143,12 @@ public abstract class AbstractQueueContainer implements QueueContainer, EntryAdd
 	}
 	@Override
 	public void entryAdded(EntryEvent<Serializable, Data> event) {
-		onEntryAdded(new Consumable(event.getValue(), false, event.getKey()));
+		onEntryAdded(new DataWrapper(event.getValue(), false, event.getKey()));
 	}
 	/**
 	 * Callback on new item received. To be implemented by subclass. The callback will
 	 * be active only on a successful return of {@link #doRegister(QueueListener)}.
 	 * @param consumable
 	 */
-	protected abstract void onEntryAdded(Consumable consumable);
+	protected abstract void onEntryAdded(DataWrapper consumable);
 }

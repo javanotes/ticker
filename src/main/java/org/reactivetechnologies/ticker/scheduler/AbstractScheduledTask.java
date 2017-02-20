@@ -15,9 +15,10 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +26,7 @@ import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -45,11 +47,16 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	protected final LinkedList<ScheduledTask> spawnedTasks = new LinkedList<>();
 	private volatile TaskContext key;
 	private ScheduledFuture<?> future;
-	TaskSchedulerImpl scheduler;
-	DelegatingCronTrigger trigger;
+	
+	private TaskSchedulerImpl scheduler;
+	private DelegatingCronTrigger trigger;
 	
 	protected Publisher publisher;
-	
+	final TaskContext newTaskContext()
+	{
+		TaskContext ctx = new TaskContext(UUID.randomUUID().toString());
+		return ctx;
+	}
 	final void setTaskKey(TaskContext key) {
 		this.key = key;
 	}
@@ -90,7 +97,51 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		}
 		return done;
 	}
-	
+	public final class TaskContext implements Serializable {
+		/**
+		 * Create a new instance with the same key.
+		 * @return
+		 */
+		TaskContext copy()
+		{
+			return new TaskContext(getKeyParam());
+		}
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		/**
+		 * 
+		 * @param keyParam
+		 */
+		private TaskContext(String keyParam) {
+			super();
+			this.keyParam = keyParam;
+		}
+
+		//Add more params as needed
+		private final String keyParam;
+
+		/**
+		 * Getter for keyParam. This will correspond to one unique {@linkplain AbstractScheduledTask}.
+		 * @return The key for this context
+		 */
+		public String getKeyParam() {
+			return keyParam;
+		}
+		/**
+		 * Emit next Data for asynchronous processing in the cluster. The data will be submitted
+		 * to a distributed processing queue as specified by {@linkplain Data#getDestination()}.
+		 * @see {@linkplain QueueListener#onMessage(Data)}
+		 * @param d
+		 */
+		public void emit(Data d)
+		{
+			_emit(d);
+		}
+
+	}
+
 	/**
 	 * This method is invoked after every successful invocation of {@link #run(TaskContext)}. This method can be 
 	 * used to schedule a new task. The scheduled task will be maintained as a child task of this instance.
@@ -111,25 +162,22 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		
 	private void runTask()
 	{
-		key = run(key);
-		if(key.isEmitData())
-			doEmit(key.getDataSet());
-		SpawnedScheduledTask spawnedTask = spawnTask(key);
+		TaskContext context = key.copy();
+		run(context);
+		
+		SpawnedScheduledTask spawnedTask = spawnTask(context);
 		if (spawnedTask != null) 
 		{
-			scheduler.scheduleAt(spawnedTask, spawnedTask.executeAfter().toDate());
+			getScheduler().scheduleAt(spawnedTask, spawnedTask.executeAfter().toDate());
 			spawnedTasks.add(spawnedTask);
 			log.info("New child task spawned " + spawnedTask);
 		}
 	}
-	protected void doEmit(Iterator<? extends Data> iterator) {
-		for(;iterator.hasNext();)
-		{
-			Data d = iterator.next();
-			publisher.offer(d);
-			iterator.remove();
-		}
-		log.info("Emitted dataset for reactive processing..");
+	
+	private void _emit(Data d)
+	{
+		publisher.offer(d);
+		log.info("Emitted data for reactive processing..");
 	}
 	private void run0()
 	{
@@ -162,6 +210,8 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 			if(isInLockingState)
 			{
 				//should be handled by Hazelcast.
+				log.error("This is an unexpected scenario! The schedule has been locked, but probably Hazelcast was shutdown. This is "
+						+ "an irrecoverable situation and is being left without any action being taken. Please check data consistency manually.");
 			}
 		}
 		catch (Exception e) {
@@ -196,20 +246,21 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	}
 	private String getTimestampKey()
 	{
-		Clock clock = scheduler.getClusterClock();
-		clock.setTimestamp(trigger.getNextExecutionTime().getTime());
+		Clock clock = getScheduler().getClusterClock();
+		clock.setTimestamp(getTrigger().getNextExecutionTime().getTime());
 		return clock.toTimestampString(scheduleTimeunit());
 	}
 	private volatile String timestampKey;
 	/**
-	 * Acquire cluster lock.
+	 * Acquire cluster lock. This method is responsible for guaranteeing uniqueness in a scheduled task run
+	 * across the cluster.
 	 * @return
 	 */
-	private boolean acquireLock() 
+	protected boolean acquireLock() 
 	{
 		timestampKey = getTimestampKey();
 		log.debug("timestampKey- "+timestampKey);
-		IMap<String, byte[]> map = scheduler.getHazelcastOps().getMap(getClass().getName());
+		IMap<String, byte[]> map = getScheduler().getHazelcastOps().getMap(getClass().getName());
 		map.lock(timestampKey);
 		try {
 			return map.putIfAbsent(timestampKey, VALUE, scheduleLockExpiryMilis(), TimeUnit.MILLISECONDS) == null;
@@ -226,5 +277,25 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	}
 	private void setInLockingState(boolean isInLockingState) {
 		this.isInLockingState = isInLockingState;
+	}
+	private TaskSchedulerImpl getScheduler() {
+		return scheduler;
+	}
+	/**
+	 * Set the {@linkplain TaskScheduler} instance to this task.
+	 * @param scheduler
+	 */
+	public void setScheduler(TaskSchedulerImpl scheduler) {
+		this.scheduler = scheduler;
+	}
+	private DelegatingCronTrigger getTrigger() {
+		return trigger;
+	}
+	/**
+	 * Set the {@linkplain CronTrigger} instance to this task.
+	 * @param trigger
+	 */
+	public void setTrigger(DelegatingCronTrigger trigger) {
+		this.trigger = trigger;
 	}
 }

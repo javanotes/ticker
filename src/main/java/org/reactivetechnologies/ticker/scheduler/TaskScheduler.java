@@ -15,6 +15,8 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
+import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+
 public interface TaskScheduler {
 
 	/**

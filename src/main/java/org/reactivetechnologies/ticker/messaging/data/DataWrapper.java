@@ -13,13 +13,17 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.ticker.messaging.dto;
+package org.reactivetechnologies.ticker.messaging.data;
 
 import java.io.Serializable;
 
 import org.reactivetechnologies.ticker.messaging.Data;
-
-public class Consumable 
+/**
+ * Wrapper over {@linkplain Data}, to be used internally.
+ * @author esutdal
+ *
+ */
+public class DataWrapper 
 {
 	private boolean removeImmediate;
 	/**
@@ -28,12 +32,12 @@ public class Consumable
 	 * @param commit
 	 * @param key
 	 */
-	public Consumable(Data data, boolean commit, Serializable key) {
+	public DataWrapper(Data data, boolean commit, Serializable key) {
 		this(data, commit, key, 0);
 	}
-	public Consumable increment()
+	public DataWrapper increment()
 	{
-		return new Consumable(data, commit, key, deliveryCount+1);
+		return new DataWrapper(data, commit, key, deliveryCount+1);
 	}
 	public final Data data;
 	public final boolean commit;
@@ -46,7 +50,7 @@ public class Consumable
 	 * @param key
 	 * @param deliveryCount
 	 */
-	public Consumable(Data data, boolean commit, Serializable key, int deliveryCount) {
+	public DataWrapper(Data data, boolean commit, Serializable key, int deliveryCount) {
 		super();
 		this.data = data;
 		this.commit = commit;

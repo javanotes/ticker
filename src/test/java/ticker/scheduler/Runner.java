@@ -13,23 +13,21 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package timekeeper.scheduler;
+package ticker.scheduler;
 
-import org.reactivetechnologies.ticker.TickerConfiguration;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+import org.reactivetechnologies.ticker.scheduler.TaskScheduler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+@Component
+public class Runner implements CommandLineRunner {
 
-@SpringBootApplication(scanBasePackageClasses = TickerConfiguration.class)
-public class Main {
-
-	public static void main(String[] args) {
-		SpringApplication.run(Main.class, args);
-	}
-	@Bean
-	Runner runner()
-	{
-		return new Runner();
+	@Autowired
+	TaskScheduler scheduler;
+	@Override
+	public void run(String... args) throws Exception {
+		scheduler.scheduleTask(new MyScheduledTask("* * * * * *"));
+		System.out.println("Registered task");
 	}
 
 }

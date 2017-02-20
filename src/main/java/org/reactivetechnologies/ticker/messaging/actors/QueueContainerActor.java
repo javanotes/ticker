@@ -27,14 +27,17 @@ import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.QueueContainer;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
+import org.reactivetechnologies.ticker.messaging.dto.__CommitRequest;
+import org.reactivetechnologies.ticker.messaging.dto.__DeadLetterRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RegistrationRequest;
+import org.reactivetechnologies.ticker.messaging.dto.__RetryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RunRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__StopRequest;
-import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
@@ -111,29 +114,51 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 			}
 			getSender().tell(!awaitingStop, getSelf());
 		}
-		else if(message instanceof Consumable)
+		else if(message instanceof __DeadLetterRequest)
 		{
-			recordDeadLetter((Consumable) message);
+			recordDeadLetter((__DeadLetterRequest) message);
+		}
+		else if(message instanceof __EntryRequest)
+		{
+			getSupervisor(((__EntryRequest) message).consume.data).tell(message, getSelf());
 		}
 		else
 			unhandled(message);
+	}
+	private void commitDelivery(DataWrapper message)
+	{
+		getSupervisor(message.data).tell(new __CommitRequest(message), getSelf());
+		log.info("Message committed finally after dead letter.");
 	}
 	/**
 	 * Delegate the message rollback strategy to a {@linkplain DeadLetterHandler}.
 	 * @param message
 	 * @throws IOException 
 	 */
-	private void recordDeadLetter(Consumable message) throws IOException {
+	private void recordDeadLetter(__DeadLetterRequest message) throws IOException {
 		if(deadLetterHandler != null)
 		{
-			Consumable consume = message.increment();
-			boolean retry = deadLetterHandler.handle(CommonHelper.deepCopy(consume.data), consume.deliveryCount);
+			DataWrapper consume = message.consume.increment();
+			boolean retry = deadLetterHandler.handle(consume.data, consume.deliveryCount);
 			if(retry)
 			{
-				((ActorRef) consumerActors.get(message.data.getDestination())).tell(new __EntryRequest(consume), getSelf());
+				getSupervisor(consume.data).tell(new __RetryRequest(consume), getSelf());
 			}
+			else
+				commitDelivery(message.consume);
+		}
+		else
+		{
+			commitDelivery(message.consume);
 		}
 	}
+	
+	private ActorRef getSupervisor(Data d)
+	{
+		Assert.isTrue(consumerActors.containsKey(d.getDestination()), "No actor mapped for destination- "+d.getDestination());
+		return ((ActorRef) consumerActors.get(d.getDestination()));
+	}
+	
 	private final Object stopWaitMutex = new Object();
 	private volatile boolean awaitingStop;
 

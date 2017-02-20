@@ -6,8 +6,8 @@ import java.util.concurrent.TimeoutException;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
-import org.reactivetechnologies.ticker.messaging.dto.ConsumableEvent;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	private static final Logger log = LoggerFactory.getLogger(AbstractDisruptorRecursiveAction.class);
 	protected final int concurrency;
 	protected final QueueListener<T> consumer;
-	protected final RingBuffer<ConsumableEvent> ringBuffer;
+	protected final RingBuffer<DataWrapperEvent> ringBuffer;
 	protected final SequenceBarrier barrier;
 	protected final Sequence sequence;
 	private HazelcastOperations hazelWrap;
@@ -37,7 +37,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	 * @param <T>
 	 * @param ql
 	 */
-	public AbstractDisruptorRecursiveAction(QueueListener<T> ql, RingBuffer<ConsumableEvent> ringBuffer, HazelcastOperations hazelWrap) {
+	public AbstractDisruptorRecursiveAction(QueueListener<T> ql, RingBuffer<DataWrapperEvent> ringBuffer, HazelcastOperations hazelWrap) {
 		this(ql, ql.parallelism(), ringBuffer, ringBuffer.newBarrier(new Sequence[0]), new Sequence(Sequencer.INITIAL_CURSOR_VALUE));
 		this.setHazelWrap(hazelWrap);
 	}
@@ -47,7 +47,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	 * @param ql
 	 * @param concurrency
 	 */
-	protected AbstractDisruptorRecursiveAction(QueueListener<T> ql, int concurrency, RingBuffer<ConsumableEvent> ringBuffer, SequenceBarrier barrier, Sequence sequence) {
+	protected AbstractDisruptorRecursiveAction(QueueListener<T> ql, int concurrency, RingBuffer<DataWrapperEvent> ringBuffer, SequenceBarrier barrier, Sequence sequence) {
 		this.concurrency = concurrency;
 		this.consumer = ql;
 		this.ringBuffer = ringBuffer;
@@ -60,7 +60,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	 * @return
 	 * @throws Exception
 	 */
-	protected  abstract Consumable fetchNextInRing(int partition) throws Exception;
+	protected  abstract DataWrapper fetchNextInRing(int partition) throws Exception;
 	
 	/**
 	 * 
@@ -102,7 +102,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void fireOnMessage(Consumable nextMessage)
+	private void fireOnMessage(DataWrapper nextMessage)
 	{
 		try 
 		{
@@ -138,7 +138,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 	{
 		try 
 		{
-			Consumable nextMessage = fetchNextInRing(partition);
+			DataWrapper nextMessage = fetchNextInRing(partition);
 			if (nextMessage != null) {
 				if (log.isDebugEnabled()) {
 					log.debug(nextMessage + "");
@@ -158,7 +158,7 @@ abstract class AbstractDisruptorRecursiveAction<T extends Data> extends Recursiv
 			forkTasks(1);//fork next corresponding task
 		}
 	}
-	private void commitDelivery(Consumable nextMessage) {
+	private void commitDelivery(DataWrapper nextMessage) {
 		hazelWrap.remove(nextMessage.key, nextMessage.data.getDestination());
 	}
 	public HazelcastOperations getHazelWrap() {

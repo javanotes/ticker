@@ -1,4 +1,4 @@
-package timekeeper.actor;
+package ticker.actor;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,35 +10,33 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
-import org.reactivetechnologies.ticker.messaging.base.Publisher;
-import org.reactivetechnologies.ticker.messaging.data.TextData;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {Ticker.class})
-public class QueuePublisherIngestionTest {
+public class QueueRestIngestionTest {
 
 	static final String INGEST_URL = "http://localhost:8081/ticker/append/"+SimpleQueueListener.QNAME;
 	
-	@Autowired
-	Publisher pub;
+	TestRestTemplate rest = new TestRestTemplate();
 	
-	private final int iteration = SimpleQueueListener.NO_OF_MESSAGES;
-	private final int connThreads = 4;
+	private final int iteration = 100;
+	private final int connThreads = 1;
 	
 	@Before
 	public void pre()
 	{
 		
 	}
-		
 	@Test
-	public void testIngestToQueue()
+	public void testAddToQueue()
 	{
 		
-		System.err.println("Starting testIngestToQueue........");
+		System.err.println("Starting test........");
 		System.err.println("Iterations => "+iteration);
 		System.err.println("Threads => "+connThreads);
 		ExecutorService ex = Executors.newFixedThreadPool(connThreads);
@@ -54,10 +52,11 @@ public class QueuePublisherIngestionTest {
 					int idx = i.getAndIncrement();
 					do {
 						
-						try 
-						{
-							pub.ingest(new TextData("HELLOCMQ " + idx, SimpleQueueListener.QNAME));
-							//Assert.assertTrue(resp);
+						try {
+							@SuppressWarnings("rawtypes")
+							ResponseEntity<HttpEntity> resp = rest.postForEntity(INGEST_URL,
+									"HELLOCMQ " + idx, HttpEntity.class);
+							Assert.assertEquals(201, resp.getStatusCodeValue());
 						} catch (Exception e) {
 							e.printStackTrace();
 							Assert.fail();
@@ -76,9 +75,9 @@ public class QueuePublisherIngestionTest {
 		} catch (InterruptedException e) {
 			
 		}
-		System.err.println("End run... Time taken in millis: "+(System.currentTimeMillis()-t));
-		Assert.assertTrue(await);
 		
+		Assert.assertTrue(await);
+		System.err.println("End run... Time taken in millis: "+(System.currentTimeMillis()-t));
 		
 		/*Assert.assertEquals(iteration, metrics.getEnqueueCount(SimpleQueueListener.QNAME));
 		Assert.assertEquals(0, metrics.getDequeueCount(SimpleQueueListener.QNAME));

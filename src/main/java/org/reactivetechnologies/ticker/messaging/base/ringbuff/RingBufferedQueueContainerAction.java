@@ -18,8 +18,8 @@ package org.reactivetechnologies.ticker.messaging.base.ringbuff;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
-import org.reactivetechnologies.ticker.messaging.dto.ConsumableEvent;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +32,11 @@ import com.lmax.disruptor.TimeoutException;
 class RingBufferedQueueContainerAction<T extends Data> extends AbstractDisruptorRecursiveAction<T> {
 
 	private static final Logger log = LoggerFactory.getLogger(RingBufferedQueueContainerAction.class);
-	public RingBufferedQueueContainerAction(QueueListener<T> ql, RingBuffer<ConsumableEvent> ringBuffer, HazelcastOperations hazelWrap) {
+	public RingBufferedQueueContainerAction(QueueListener<T> ql, RingBuffer<DataWrapperEvent> ringBuffer, HazelcastOperations hazelWrap) {
 		super(ql, ringBuffer, hazelWrap);
 	}
 
-	private RingBufferedQueueContainerAction(QueueListener<T> consumer, int i, RingBuffer<ConsumableEvent> ringBuffer,
+	private RingBufferedQueueContainerAction(QueueListener<T> consumer, int i, RingBuffer<DataWrapperEvent> ringBuffer,
 			SequenceBarrier barrier, Sequence sequence) {
 		super(consumer, i, ringBuffer, barrier, sequence);
 	}
@@ -61,10 +61,10 @@ class RingBufferedQueueContainerAction<T extends Data> extends AbstractDisruptor
 		return true;
 	}
 	@Override
-	protected  Consumable fetchNextInRing(int partition) throws Exception
+	protected  DataWrapper fetchNextInRing(int partition) throws Exception
     {
 		log.debug("PARTITION............"+partition);
-        ConsumableEvent event = null;
+        DataWrapperEvent event = null;
         long currentSequence = sequence.get();
         long nextSequence = currentSequence+1;
         try

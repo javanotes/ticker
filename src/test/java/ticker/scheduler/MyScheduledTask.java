@@ -13,13 +13,12 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package timekeeper.scheduler;
+package ticker.scheduler;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask;
-import org.reactivetechnologies.ticker.scheduler.TaskContext;
 
 public class MyScheduledTask extends AbstractScheduledTask {
 
@@ -30,9 +29,9 @@ public class MyScheduledTask extends AbstractScheduledTask {
 
 	private String cronExpr;
 	@Override
-	public TaskContext run(TaskContext context) {
+	public void run(TaskContext context) {
 		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - DistributedScheduledTask.run()");
-		return context;
+		//context.emit(d);
 	}
 
 	@Override

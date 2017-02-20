@@ -167,6 +167,8 @@ public class ActorSystemConfiguration {
 		public QueueContainerActor create() throws Exception {
 			QueueContainerActor qc = new QueueContainerActor(ops);
 			qc.setClearAllPendingEntries(clearAllPendingEntries);
+			if(qc.isClearAllPendingEntries())
+				log.warn("'clear_all_pending' is set to TRUE. This is not advisable in production environment!");
 			qc.setRemoveImmediate(removeImmediate);
 			qc.setCheckExclusiveAccess(checkExclusiveAccess);
 			qc.migrationListener = migrListener;

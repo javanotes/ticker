@@ -33,9 +33,14 @@ import io.netty.channel.Channel;
 class RestServer extends RestExpress {
 
 	private static final Logger log = LoggerFactory.getLogger(RestServer.class);
+	
+	public static final String URL_VAL_QNAME = "queue";
+	public static final String URL_ADD = "/add/{"+URL_VAL_QNAME+"}";
+	public static final String URL_APPEND = "/append/{"+URL_VAL_QNAME+"}";
+	public static final String URL_INGEST = "/append/{"+URL_VAL_QNAME+"}";
 
 	@Value("${server.port-offset:100}")
-	private int MAX_PORT_OFFSET;
+	private int portOffset;
 
 	@Autowired
 	private AddHandler addService;
@@ -55,11 +60,11 @@ class RestServer extends RestExpress {
 	}
 	public void startServer()
 	{
-		List<Route> routes = uri(getBaseUrl()+"/add/{queue}", addService).build();
+		List<Route> routes = uri(getBaseUrl()+URL_ADD, addService).build();
 		printRoutes(routes);
-		routes = uri(getBaseUrl()+"/ingest/{queue}", ingestService).build();
+		routes = uri(getBaseUrl()+URL_INGEST, ingestService).build();
 		printRoutes(routes);
-		routes = uri(getBaseUrl()+"/append/{queue}", appendService).build();
+		routes = uri(getBaseUrl()+URL_APPEND, appendService).build();
 		printRoutes(routes);
 		
 		bind();
@@ -101,7 +106,7 @@ class RestServer extends RestExpress {
 		if(hasHostname())
 			host = getHostname();
 		
-		for (int offset = 0; offset < MAX_PORT_OFFSET; offset++) {
+		for (int offset = 0; offset < portOffset; offset++) {
 			_port += offset;
 			if(isPortAvailable(host, _port))
 				return _port;
@@ -115,7 +120,7 @@ class RestServer extends RestExpress {
 
 			@Override
 			public String getMessage() {
-				return super.getMessage()+". Unable to find free ports within a range offset of "+MAX_PORT_OFFSET;
+				return super.getMessage()+". Unable to find free ports within a range offset of "+portOffset;
 			}
 		};
 	}

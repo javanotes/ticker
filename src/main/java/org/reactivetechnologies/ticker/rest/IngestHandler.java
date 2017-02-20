@@ -18,6 +18,7 @@ package org.reactivetechnologies.ticker.rest;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.MessageProcessingException;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
 import org.restexpress.Request;
@@ -30,6 +31,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
 /**
  * Add JSON array to queue in an asynchronous manner.
  * @author esutdal
@@ -40,7 +43,7 @@ public class IngestHandler extends HandlerBase{
 	private static final Logger log = LoggerFactory.getLogger(AppendHandler.class);
 
 	/**
-	 * 
+	 * Add a array of JSON objects to the processing queue via an asynchronous thread.
 	 * @param queue
 	 * @param jsonArray
 	 * @throws JsonProcessingException
@@ -62,9 +65,9 @@ public class IngestHandler extends HandlerBase{
 			for (Iterator<JsonNode> iter = root.elements(); iter.hasNext();) {
 				each = iter.next();
 				
-				TextData text = new TextData(ow.writeValueAsString(each), queue);
+				Data text = new TextData(ow.writeValueAsString(each), queue);
 				text.setAddAsync(true);
-				publish(text, false);
+				publish(text);
 			}
 		}
 
@@ -77,6 +80,7 @@ public class IngestHandler extends HandlerBase{
 	protected void doPost(Request request, Response response) throws Exception {
 		RequestBody parsed = parse(request, response);
 		addJsonArrayToQueue(parsed.queue, parsed.body);
+		response.setResponseStatus(HttpResponseStatus.ACCEPTED);
 	}
 
 

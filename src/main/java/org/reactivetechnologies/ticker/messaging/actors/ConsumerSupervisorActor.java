@@ -20,13 +20,18 @@ import java.util.concurrent.TimeUnit;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.MessageProcessingException;
+import org.reactivetechnologies.ticker.messaging.base.DeadLetterHandler;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
+import org.reactivetechnologies.ticker.messaging.dto.__CommitRequest;
+import org.reactivetechnologies.ticker.messaging.dto.__DeadLetterRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
+import org.reactivetechnologies.ticker.messaging.dto.__RetryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryEventType;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -100,8 +105,8 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * or retry message processing.
 	 * @param msg
 	 */
-	private void recordDeadLetter(Consumable msg) {
-		getContext().parent().tell(msg, getSelf());
+	private void recordDeadLetter(DataWrapper msg) {
+		getContext().parent().tell(new __DeadLetterRequest(msg), getSelf());
 	}
 
 	private volatile String listnrRegId;
@@ -121,16 +126,20 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	{
 		registerLocalEntryListener();
 	}
-
+	/**
+	 * Process the pending entries.
+	 */
 	private void processPendingEntries() 
 	{
 		T entry;
-		Consumable item;
+		EntryEvent<Serializable, T> event;
 		for(Object key : clearAll ? queueMap.keySet() : queueMap.localKeySet())
 		{
 			entry = queueMap.get(key);
-			item = new Consumable(entry, false, (Serializable) key);
-			delegateToWorker(item);
+			event = new EntryEvent<Serializable, T>(listener.routing() + "-listener",
+					hazelcast.getCluster().getLocalMember(), EntryEventType.MERGED.getType(), (Serializable) key,
+					entry);
+			entryAdded(event);
 		}
 		log.info("Submitted pending entries with clearAll?"+clearAll);
 	}
@@ -160,13 +169,27 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 
 	@Override
 	public void onReceive(Object msg) throws Throwable {
-		if(msg instanceof Consumable)
+		if(msg instanceof DataWrapper)
 		{
-			endTransaction((Consumable) msg);
+			endTransaction((DataWrapper) msg);
 		}
 		else if(msg instanceof __EntryRequest)
 		{
-			delegateToWorker(((__EntryRequest) msg).consume);
+			DataWrapper consume = ((__EntryRequest) msg).consume;
+			delegateExclusively(consume);
+			
+		}
+		else if(msg instanceof __RetryRequest)
+		{
+			DataWrapper consume = ((__RetryRequest) msg).consume;
+			delegateToWorker(consume);
+			
+		}
+		else if(msg instanceof __CommitRequest)
+		{
+			DataWrapper consume = ((__CommitRequest) msg).consume;
+			commitDelivery(consume, consume.isRemoveImmediate());
+			
 		}
 		else
 			unhandled(msg);
@@ -176,7 +199,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * from the worker in the same thread as well (bypassing actor flow).
 	 * @param msg
 	 */
-	final void endTransaction(Consumable msg) {
+	final void endTransaction(DataWrapper msg) {
 		
 		if(msg.commit)
 			commitDelivery(msg, msg.isRemoveImmediate());
@@ -200,7 +223,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * @param msg
 	 * @param immediate 
 	 */
-	private void commitDelivery(Consumable msg, boolean immediate) {
+	private void commitDelivery(DataWrapper msg, boolean immediate) {
 		if(immediate)
 			queueMap.remove(msg.key);
 		else
@@ -211,11 +234,21 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	@Override
 	public void entryAdded(EntryEvent<Serializable, T> event) {
 		log.debug("New entry received:: "+event);
-		delegateToWorker(new Consumable(event.getValue(), false, event.getKey()));
+		DataWrapper consume = new DataWrapper(event.getValue(), false, event.getKey());
+		
+		delegateExclusively(consume);
 	}
-	private boolean hasExclusiveAccess(Consumable consumeMessage)
+	
+	private void delegateExclusively(DataWrapper consume)
 	{
-		if (checkExclusiveAccess) {
+		if (hasExclusiveAccess(consume)) {
+			delegateToWorker(consume);
+		}
+	}
+	private boolean hasExclusiveAccess(DataWrapper consumeMessage)
+	{
+		if (checkExclusiveAccess) 
+		{
 			queueMap.lock(consumeMessage.key);
 			try {
 				if (consumeMessage.data.getProcessState() == Data.STATE_OPEN) {
@@ -234,12 +267,9 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * Delegate a consumer message to routee for execution.
 	 * @param consumeMessage
 	 */
-	private void delegateToWorker(Consumable consumeMessage) {
-		if (hasExclusiveAccess(consumeMessage)) 
-		{
-			consumeMessage.setRemoveImmediate(removeImmediate);
-			workerPool.tell(consumeMessage, getSelf());
-		}
+	private void delegateToWorker(DataWrapper consumeMessage) {
+		consumeMessage.setRemoveImmediate(removeImmediate);
+		workerPool.tell(consumeMessage, getSelf());
 	}
 	public boolean isCheckExclusiveAccess() {
 		return checkExclusiveAccess;

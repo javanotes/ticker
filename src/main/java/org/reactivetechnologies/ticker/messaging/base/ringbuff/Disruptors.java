@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.reactivetechnologies.ticker.messaging.dto.ConsumableEvent;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -38,7 +38,7 @@ import com.lmax.disruptor.dsl.ProducerType;
 class Disruptors {
 
 	private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
-	private final Map<String, Disruptor<ConsumableEvent>> disruptors = new HashMap<>();
+	private final Map<String, Disruptor<DataWrapperEvent>> disruptors = new HashMap<>();
 	public int size()
 	{
 		rwlock.readLock().lock();
@@ -60,7 +60,7 @@ class Disruptors {
 	public void register(String name,  int ringBufferSize, long pollTime, TimeUnit pollTimeUnit)
 	{
 		log.info("["+name+"] Initiating ring buffer with size "+ringBufferSize);
-		Disruptor<ConsumableEvent> disruptor = new Disruptor<>(ConsumableEvent.EVENT_FACTORY, ringBufferSize, new ThreadFactory() {
+		Disruptor<DataWrapperEvent> disruptor = new Disruptor<>(DataWrapperEvent.EVENT_FACTORY, ringBufferSize, new ThreadFactory() {
 			private int n=0;
 			@Override
 			public Thread newThread(Runnable r) {
@@ -99,7 +99,7 @@ class Disruptors {
 		register(name, ringBufferSize, pollTime, TimeUnit.MILLISECONDS);
 	}
 	
-	public Disruptor<ConsumableEvent> get(String name)
+	public Disruptor<DataWrapperEvent> get(String name)
 	{
 		Assert.isTrue(disruptors.containsKey(name), "Disruptor not found for name- "+name);
 		rwlock.readLock().lock();
@@ -128,7 +128,7 @@ class Disruptors {
 			}
 			else
 			{
-				for(Disruptor<ConsumableEvent> d : disruptors.values())
+				for(Disruptor<DataWrapperEvent> d : disruptors.values())
 					d.start();
 			}
 			
@@ -150,7 +150,7 @@ class Disruptors {
 			}
 			else
 			{
-				for(Disruptor<ConsumableEvent> d : disruptors.values())
+				for(Disruptor<DataWrapperEvent> d : disruptors.values())
 					d.shutdown();
 			}
 			

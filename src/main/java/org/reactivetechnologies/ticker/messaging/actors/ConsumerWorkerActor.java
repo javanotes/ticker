@@ -17,7 +17,7 @@ package org.reactivetechnologies.ticker.messaging.actors;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.messaging.dto.Consumable;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +36,8 @@ final class ConsumerWorkerActor<E extends Data> extends UntypedActor {
 	}
 	@Override
 	public void onReceive(Object msg) throws Throwable {
-		if (msg instanceof Consumable) {
-			executeDelivery((Consumable) msg);
+		if (msg instanceof DataWrapper) {
+			executeDelivery((DataWrapper) msg);
 		} else
 			unhandled(msg);
 
@@ -46,7 +46,7 @@ final class ConsumerWorkerActor<E extends Data> extends UntypedActor {
 	//When a routee replies to a routed message, the reply will be sent to the original sender, not to the router actor.
 	
 	@SuppressWarnings("unchecked")
-	private void executeDelivery(Consumable msg) throws Exception {
+	private void executeDelivery(DataWrapper msg) throws Exception {
 		boolean commit = false;
 		try
 		{
@@ -56,9 +56,9 @@ final class ConsumerWorkerActor<E extends Data> extends UntypedActor {
 		finally
 		{
 			if(msg.isRemoveImmediate())
-				supervisorInstance.endTransaction(new Consumable(msg.data, commit, msg.key));
+				supervisorInstance.endTransaction(new DataWrapper(msg.data, commit, msg.key));
 			else
-				getSender().tell(new Consumable(msg.data, commit, msg.key), getSelf());
+				getSender().tell(new DataWrapper(msg.data, commit, msg.key), getSelf());
 		}
 		
 	}

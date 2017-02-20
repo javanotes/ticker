@@ -42,6 +42,14 @@ public class MessagingConfiguration {
 	{
 		return new RingBufferedQueueContainer(hazelWrap);
 	}*/
+	
+	//TODO: a default retrying DeadLetterHandler
+	
+	/**
+	 * This is the default {@linkplain DeadLetterHandler} which will ignore silently without any handling.
+	 * Configure a @Primary bean for custom handlers with defined retry strategy.
+	 * @return
+	 */
 	@Bean
 	DeadLetterHandler deadLetter()
 	{
@@ -49,8 +57,9 @@ public class MessagingConfiguration {
 			
 			@Override
 			public boolean handle(Data data, int deliveryCount) {
-				// TODO override and implement
-				System.out.println("new DeadLetterHandler() {...}.handle()");
+				System.out.println("+----------------------+");
+				System.out.println("|TODO:DEAD_LETTER_NOTIF|");
+				System.out.println("+----------------------+");
 				return false;
 			}
 		};

@@ -17,10 +17,9 @@ package org.reactivetechnologies.ticker.messaging.dto;
 
 import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 
-public class __EntryRequest {
+public class __CommitRequest {
 
-	public __EntryRequest(DataWrapper consume) {
-		super();
+	public __CommitRequest(DataWrapper consume) {
 		this.consume = consume;
 	}
 

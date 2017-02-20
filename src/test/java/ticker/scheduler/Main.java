@@ -13,30 +13,23 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.ticker.messaging.dto;
+package ticker.scheduler;
 
-import com.lmax.disruptor.EventFactory;
+import org.reactivetechnologies.ticker.TickerConfiguration;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
-public class ConsumableEvent {
-	public ConsumableEvent() {
-		
+@SpringBootApplication(scanBasePackageClasses = TickerConfiguration.class)
+public class Main {
+
+	public static void main(String[] args) {
+		SpringApplication.run(Main.class, args);
+	}
+	@Bean
+	Runner runner()
+	{
+		return new Runner();
 	}
 
-	public Consumable getEvent() {
-		return event;
-	}
-
-	public void setEvent(Consumable event) {
-		this.event = event;
-	}
-
-	private Consumable event;
-	
-	public final static EventFactory<ConsumableEvent> EVENT_FACTORY = new EventFactory<ConsumableEvent>()
-    {
-        public ConsumableEvent newInstance()
-        {
-            return new ConsumableEvent();
-        }
-    };
 }

@@ -1,4 +1,4 @@
-package timekeeper.actor;
+package ticker.actor;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -14,7 +14,6 @@ import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
 import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
-import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,23 +21,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-/**
- * @deprecated {@linkplain RingBufferedQueueContainer} is experimental.
- * @author esutdal
- *
- */
+import akka.actor.Inbox;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {Ticker.class})
-public class QueueListenerDisruptorTest {
-	
+public class QueueListenerActorTest {
+
 	static final int NO_OF_ITEMS = SimpleQueueListener.NO_OF_MESSAGES;
 	static final int PUB_THREADS = 4;
 	
 	@Autowired
 	Publisher pub;
-	
-	@Autowired
-	MessagingContainerSupport containerSupport;
 	
 	@Before
 	public void pre()
@@ -92,14 +85,19 @@ public class QueueListenerDisruptorTest {
 		
 	}
 	
+	@Autowired
+	Inbox inbox;
 	
-	static final Logger log = LoggerFactory.getLogger(QueueListenerDisruptorTest.class);
+	@Autowired
+	MessagingContainerSupport containerSupport;
+	
+	static final Logger log = LoggerFactory.getLogger(QueueListenerActorTest.class);
 	@Test
 	public void pollFromQueue() throws TimeoutException
 	{
 		CountDownLatch l = new CountDownLatch(NO_OF_ITEMS);
-		long start = System.currentTimeMillis();
 		containerSupport.registerListener(new SimpleQueueListener(l));
+		long start = System.currentTimeMillis();
 		containerSupport.start();
 		
 		log.info("Started container run.........................");

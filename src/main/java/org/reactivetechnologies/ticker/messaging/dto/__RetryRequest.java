@@ -13,21 +13,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package timekeeper.scheduler;
+package org.reactivetechnologies.ticker.messaging.dto;
 
-import org.reactivetechnologies.ticker.scheduler.TaskScheduler;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-@Component
-public class Runner implements CommandLineRunner {
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 
-	@Autowired
-	TaskScheduler scheduler;
-	@Override
-	public void run(String... args) throws Exception {
-		scheduler.scheduleTask(new MyScheduledTask("* * * * * *"));
-		System.out.println("Registered task");
+public class __RetryRequest {
+
+	public __RetryRequest(DataWrapper consume) {
+		this.consume = consume;
 	}
 
+	public final DataWrapper consume;
 }

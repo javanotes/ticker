@@ -15,14 +15,15 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
+import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+
 public interface ScheduledRunnable {
 
 	/**
 	 * This is the method that has to be implemented in subclasses.
 	 * @param context a context object that can have various runtime parameters.
-	 * @return a modified context, that will be passed in next run.
 	 */
-	TaskContext run(TaskContext context);
+	void run(TaskContext context);
 
 	/**
 	 * The CRON expression for the schedule.

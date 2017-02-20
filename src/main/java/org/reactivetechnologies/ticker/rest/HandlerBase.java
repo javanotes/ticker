@@ -46,24 +46,52 @@ abstract class HandlerBase {
 
 	@Autowired
 	protected Publisher publisher;
-		
+	/**
+	 * 	
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	public void create(Request request, Response response) throws Exception
 	{
 		doPost(request, response);
-		response.setResponseCreated();
 	}
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	public void read(Request request, Response response) throws Exception
 	{
 		
 	}
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	public void update(Request request, Response response) throws Exception
 	{
 		
 	}
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	public void delete(Request request, Response response) throws Exception
 	{
 		
 	}
+	/**
+	 * 
+	 * @param request
+	 * @param response
+	 * @throws Exception
+	 */
 	protected abstract void doPost(Request request, Response response) throws Exception;
 	@Autowired
 	protected ActorSystem inbox;
@@ -71,24 +99,9 @@ abstract class HandlerBase {
 	/**
 	 * Invoke {@linkplain ActorRef#tell(Object, ActorRef)} using non-blocking/blocking (ask) semantics.
 	 * @param d
-	 * @param ask
 	 */
-	protected void publish(Data d, boolean ask)
-	{/*
-		if(ask)
-		{
-			Inbox in = Inbox.create(inbox);
-			in.send(publisher, d);
-			try {
-				in.receive(FiniteDuration.apply(1, TimeUnit.SECONDS));
-			} catch (TimeoutException e) {
-				throw new DataAccessResourceFailureException("Ask timed out", e);
-			}
-		}
-		else
-			publisher.tell(d, ActorRef.noSender());
-	*/
-		
+	protected void publish(Data d)
+	{
 		if(d.isAddAsync())
 			publisher.ingest(d);
 		else
@@ -96,7 +109,7 @@ abstract class HandlerBase {
 		
 	}
 	protected RequestBody parse(Request req, Response res) {
-		String queue = (String) req.getHeader("queue");
+		String queue = (String) req.getHeader(RestServer.URL_VAL_QNAME);
 		Assert.notNull(queue);
 		
 		ByteBuffer bb = req.getBodyAsByteBuffer();
