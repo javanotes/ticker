@@ -15,40 +15,57 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
-import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 /**
- * @experimental
+ * A special {@linkplain ScheduledTask} that is run as a 'post scenario' of an {@linkplain AbstractScheduledTask}.
+ * Thus it behaves as a child task. It will share the same context as used by the parent {@linkplain AbstractScheduledTask}, thus
+ * leveraging a pre-post type task handling.
  * @author esutdal
  *
  */
 public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 
+	private volatile TaskContext passedContext;
 	/**
 	 * This time represents the actual execution time of the schedule, after loading has been done.
 	 * So the prepare phase will run at {@link #cronExpression()} intervals, and the actual executions
-	 * will run at + delta {@linkplain DelayTime}.
+	 * will run at + delta.
 	 * @return
 	 */
 	public abstract Clock executeAfter();
-	
 	/**
-	 * The prepare method to be run. This is run at cron schedule and before the actual execution.
-	 * @return
+	 * This method is overridden so that a single spawned child task keeps recurring, once started 
+	 * by the parent task. Do not modify this, else there can be chances of multiple child schedule runs.
+	 * @see AbstractScheduledTask#spawnTask(TaskContext)
 	 */
-	public abstract TaskContext runPrepare();
-	/**
-	 * The actual execution of scheduled task.
-	 * @return
-	 */
-	public abstract TaskContext runExecute();
-	
-	
-	@Override
-	public void run(TaskContext context) {
-		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - DistributedScheduledTask.run()");
-	}
-	protected SpawnedScheduledTask spawnTask(TaskContext context)
+	protected final SpawnedScheduledTask spawnTask(TaskContext context)
 	{
-		return this;
+		return null;
+	}
+	/**
+	 * This method is overridden and set to true. The spawned task can only run on the instance 
+	 * that acquired the parent task. So no need to check here anymore.
+	 */
+	@Override
+	final boolean acquireLock() 
+	{
+		return true;
+	}
+	public String cronExpression()
+	{
+		return null;
+		
+	}
+	protected final TimeUnit scheduleTimeunit() {
+		//noop
+		throw new UnsupportedOperationException();
+	}
+	@Override
+	TaskContext getPassedContext() {
+		return passedContext;
+	}
+	void setPassedContext(TaskContext passedContext) {
+		this.passedContext = passedContext;
 	}
 }

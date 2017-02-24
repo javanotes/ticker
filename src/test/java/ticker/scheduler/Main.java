@@ -18,9 +18,10 @@ package ticker.scheduler;
 import org.reactivetechnologies.ticker.TickerConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 
-@SpringBootApplication(scanBasePackageClasses = TickerConfiguration.class)
+@SpringBootApplication(scanBasePackageClasses = TickerConfiguration.class, exclude = {HazelcastAutoConfiguration.class})
 public class Main {
 
 	public static void main(String[] args) {

@@ -18,6 +18,8 @@ package org.reactivetechnologies.ticker;
 import org.reactivetechnologies.ticker.messaging.MessagingConfiguration;
 import org.reactivetechnologies.ticker.rest.RestConfiguration;
 import org.reactivetechnologies.ticker.scheduler.SchedulerConfiguration;
+import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
@@ -25,4 +27,9 @@ import org.springframework.context.annotation.Import;
 @Import({SchedulerConfiguration.class, MessagingConfiguration.class, RestConfiguration.class})
 public class TickerConfiguration {
 	
+	@Bean
+	ApplicationContextHelper ctxHelper()
+	{
+		return new ApplicationContextHelper();
+	}
 }

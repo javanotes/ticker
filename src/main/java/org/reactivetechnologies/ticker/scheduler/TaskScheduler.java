@@ -20,18 +20,19 @@ import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskConte
 public interface TaskScheduler {
 
 	/**
-	 * Schedule a keyed task on a CRON expression. Execution will end once the scheduler shuts down or the returned ScheduledFuture gets cancelled.
+	 * Schedule a new recurring task based on a CRON expression. 
+	 * Execution will end once the scheduler shuts down or the returned ScheduledFuture gets cancelled.
 	 * @param task
 	 * @return initial context for the task scheduled.
 	 */
 	TaskContext scheduleTask(AbstractScheduledTask task);
 
 	/**
-	 * Schedule a one shot execution after a given time.
+	 * Schedule a one shot task execution at some given time in future.
 	 * @param task
 	 * @return
 	 */
-	TaskContext scheduleSingleTask(AbstractScheduledTask task);
+	//TaskContext scheduleSingleTask(AbstractScheduledTask task);
 
 	/**
 	 * Cancel a given task by {@linkplain TaskContext#getKeyParam()}

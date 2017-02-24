@@ -14,15 +14,29 @@
    limitations under the License.
  */
 package org.reactivetechnologies.ticker.scheduler;
+
+import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+
 /**
  * A keyed task which is to be scheduled and run.
  * @author esutdal
  *
  */
-public interface ScheduledTask extends Runnable {
+public interface ScheduledTask {
 	/**
 	 * Cancel the current task.
 	 * @return 
 	 */
 	boolean cancel();
+	/**
+	 * This is the method that has to be implemented in subclasses.
+	 * @param context a context object that can have various runtime parameters.
+	 */
+	void run(TaskContext context);
+
+	/**
+	 * The CRON expression for the schedule.
+	 * @return
+	 */
+	String cronExpression();
 }

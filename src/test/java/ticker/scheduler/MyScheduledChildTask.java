@@ -15,21 +15,28 @@
  */
 package ticker.scheduler;
 
-import org.reactivetechnologies.ticker.scheduler.TaskScheduler;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-@Component
-public class Runner implements CommandLineRunner {
+import java.util.Date;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
-	@Autowired
-	TaskScheduler scheduler;
-	@Override
-	public void run(String... args) throws Exception {
-		MyScheduledTask task = new MyScheduledTask("*/5 * * * * *");
-		task.setChildTask(MyScheduledChildTask.class);
-		scheduler.scheduleTask(task);
-		System.out.println("Registered task");
+import org.reactivetechnologies.ticker.scheduler.Clock;
+import org.reactivetechnologies.ticker.scheduler.SpawnedScheduledTask;
+
+public class MyScheduledChildTask extends SpawnedScheduledTask {
+
+	public MyScheduledChildTask() {
+		super();
 	}
 
+	@Override
+	public void run(TaskContext context) {
+		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - MyScheduledChildTask.run()");
+		//context.emit(d);
+	}
+
+	@Override
+	public Clock executeAfter() {
+		return new Clock(1, TimeUnit.SECONDS, TimeZone.getDefault());
+	}
+	
 }

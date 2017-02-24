@@ -23,18 +23,32 @@ import org.springframework.scheduling.support.CronTrigger;
 
 public class DelegatingCronTrigger extends CronTrigger {
 
+	private final TimeZone tzone;
 	public DelegatingCronTrigger(String expression, TimeZone timeZone) {
 		super(expression, timeZone);
+		this.tzone = timeZone;
 	}
 
 	public Date getNextExecutionTime() {
 		return nextExecutionTime;
 	}
 
-	private volatile Date nextExecutionTime;
+	private volatile Date nextExecutionTime, lastExecutionTime;
 	@Override
 	public Date nextExecutionTime(TriggerContext triggerContext) {
 		nextExecutionTime = super.nextExecutionTime(triggerContext);
 		return nextExecutionTime;
+	}
+
+	public Date getLastExecutionTime() {
+		return lastExecutionTime;
+	}
+
+	public void setLastExecutionTime(Date lastExecutionTime) {
+		this.lastExecutionTime = lastExecutionTime;
+	}
+
+	public TimeZone getTzone() {
+		return tzone;
 	}
 }

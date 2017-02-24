@@ -35,7 +35,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.IMap;
@@ -149,19 +148,20 @@ public class TaskSchedulerImpl implements TaskScheduler {
 		TaskContext initialCtx = task.newTaskContext();
 		task.setTaskKey(initialCtx);
 		DelegatingCronTrigger cronTrigg = new DelegatingCronTrigger(task.cronExpression(), getClusterClock().getZone());
-		ScheduledFuture<?> future = schedule(task, cronTrigg);
-		task.setCancellable(future);
 		task.setScheduler(this);
 		task.setTrigger(cronTrigg);
+		task.setContextMap(getHazelcastOps().getMap(task.name()));
 		task.publisher = pub;
+		ScheduledFuture<?> future = schedule(task, cronTrigg);
+		task.setCancellable(future);
 		registry.put(initialCtx.getKeyParam(), task);
 		return initialCtx;
 	}
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#scheduleSingleTask(org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask)
 	 */
-	@Override
-	public TaskContext scheduleSingleTask(AbstractScheduledTask task)
+	//@Override
+	/*public TaskContext scheduleSingleTask(AbstractScheduledTask task)
 	{
 		TaskContext initialCtx = task.newTaskContext();
 		task.setTaskKey(initialCtx);
@@ -170,7 +170,7 @@ public class TaskSchedulerImpl implements TaskScheduler {
 		task.setScheduler(this);
 		registry.put(initialCtx.getKeyParam(), task);
 		return initialCtx;
-	}
+	}*/
 	
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#cancelTask(org.reactivetechnologies.ticker.scheduler.TaskContext, boolean)

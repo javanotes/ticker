@@ -30,6 +30,7 @@ public class MyScheduledTask extends AbstractScheduledTask {
 	private String cronExpr;
 	@Override
 	public void run(TaskContext context) {
+		context.spawnChildTask(true);
 		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - DistributedScheduledTask.run()");
 		//context.emit(d);
 	}

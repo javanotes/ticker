@@ -116,7 +116,12 @@ public class Clock implements DataSerializable {
 	}
 
 	public Date toDate() {
-		return new Date(timestamp);
+		return new Date(toMillis());
+	}
+	
+	public long toMillis()
+	{
+		return unit.toMillis(timestamp);
 	}
 
 }

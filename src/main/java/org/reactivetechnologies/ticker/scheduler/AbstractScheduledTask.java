@@ -17,15 +17,24 @@ package org.reactivetechnologies.ticker.scheduler;
 
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
+import org.reactivetechnologies.ticker.messaging.base.QueueListener;
+import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.support.CronSequenceGenerator;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.Assert;
 
@@ -38,19 +47,20 @@ import com.hazelcast.core.IMap;
  * @see #scheduleLockExpiryMilis()
  *
  */
-public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledRunnable {
+public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractScheduledTask.class);
 	/**
 	 * TODO: do we need an Actor like pattern in a scheduler??
 	 */
-	protected final LinkedList<ScheduledTask> spawnedTasks = new LinkedList<>();
+	protected final Set<ScheduledTask> spawnedTasks = Collections.synchronizedSet(new HashSet<>());
 	private volatile TaskContext key;
 	private ScheduledFuture<?> future;
 	
 	private TaskSchedulerImpl scheduler;
-	private DelegatingCronTrigger trigger;
+	protected DelegatingCronTrigger trigger;
 	
+	private IMap<Serializable, Data> contextMap;
 	protected Publisher publisher;
 	final TaskContext newTaskContext()
 	{
@@ -60,6 +70,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	final void setTaskKey(TaskContext key) {
 		this.key = key;
 	}
+	
 	/**
 	 * 
 	 * @param cancellable
@@ -71,6 +82,10 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	{
 		Assert.notNull(future, "Not scheduled yet");
 		return future.isCancelled();
+	}
+	public String name()
+	{
+		return getClass().getName()+"__task";
 	}
 	public boolean cancel()
 	{
@@ -85,6 +100,10 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		return false;
 		
 	}
+	/**
+	 * Cancel all spawned tasks.
+	 * @return
+	 */
 	protected boolean cancelSpawned()
 	{
 		boolean done = false;
@@ -97,7 +116,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		}
 		return done;
 	}
-	public final class TaskContext implements Serializable {
+	public final class TaskContext implements Serializable,Map<Serializable, Data> {
 		/**
 		 * Create a new instance with the same key.
 		 * @return
@@ -119,7 +138,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 			this.keyParam = keyParam;
 		}
 
-		//Add more params as needed
+		//unnecessary
 		private final String keyParam;
 
 		/**
@@ -137,8 +156,70 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		 */
 		public void emit(Data d)
 		{
-			_emit(d);
+			doEmit(d);
 		}
+		
+		
+		@Override
+		public void clear() {
+			getContextMap().clear();
+			
+		}
+		@Override
+		public boolean containsKey(Object arg0) {
+			return getContextMap().containsKey(arg0);
+		}
+		@Override
+		public boolean containsValue(Object arg0) {
+			return getContextMap().containsValue(arg0);
+		}
+		@Override
+		public Set<java.util.Map.Entry<Serializable, Data>> entrySet() {
+			return getContextMap().entrySet();
+		}
+		@Override
+		public Data get(Object arg0) {
+			return getContextMap().get(arg0);
+		}
+		@Override
+		public boolean isEmpty() {
+			return getContextMap().isEmpty();
+		}
+		@Override
+		public Set<Serializable> keySet() {
+			return getContextMap().keySet();
+		}
+		@Override
+		public Data put(Serializable arg0, Data arg1) {
+			return getContextMap().put(arg0, arg1);
+		}
+		@Override
+		public void putAll(Map<? extends Serializable, ? extends Data> arg0) {
+			getContextMap().putAll(arg0);
+		}
+		@Override
+		public Data remove(Object arg0) {
+			return getContextMap().remove(arg0);
+		}
+		@Override
+		public int size() {
+			return getContextMap().size();
+		}
+		@Override
+		public Collection<Data> values() {
+			return getContextMap().values();
+		}
+		public boolean isSpawnChildTask() {
+			return spawnChildTask;
+		}
+		/**
+		 * Set to true if a child task need to be spawned from this {@linkplain AbstractScheduledTask}.
+		 * @param spawnChildTask
+		 */
+		public void spawnChildTask(boolean spawnChildTask) {
+			this.spawnChildTask = spawnChildTask;
+		}
+		private boolean spawnChildTask;
 
 	}
 
@@ -150,8 +231,61 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	 */
 	protected SpawnedScheduledTask spawnTask(TaskContext context)
 	{
+		if(context.isSpawnChildTask())
+		{
+			return childsThreadLocal.get();
+		}
 		return null;
 	}
+	//TODO: use an eager pooling approach for performance
+	private ThreadLocal<SpawnedScheduledTask> childsThreadLocal = ThreadLocal.withInitial(new Supplier<SpawnedScheduledTask>() {
+
+		@SuppressWarnings("unchecked")
+		private SpawnedScheduledTask scanForChildTask()
+		{
+			Assert.notNull(spawnedTask, "No SpawnedScheduledTask set but spawnChildTask is true");
+			SpawnedScheduledTask subTask = null;
+			log.info("Creating new sub task instance..");
+			if (spawnedTask instanceof Class) {
+				subTask = (SpawnedScheduledTask) ApplicationContextHelper
+						.scanForClassInstance((Class<? extends SpawnedScheduledTask>) spawnedTask, "");
+				
+				if(subTask == null)
+					subTask = (SpawnedScheduledTask) ApplicationContextHelper.getInstance((Class<? extends SpawnedScheduledTask>) spawnedTask);
+			}
+			else if (spawnedTask instanceof String) {
+				subTask = (SpawnedScheduledTask) ApplicationContextHelper.scanFromContext(spawnedTask.toString());
+				
+				if(subTask == null)
+					subTask = (SpawnedScheduledTask) ApplicationContextHelper.scanForClassInstance(spawnedTask.toString());
+			}
+			if(subTask != null){
+				subTask.setScheduler(AbstractScheduledTask.this.getScheduler());
+				subTask.setTrigger(AbstractScheduledTask.this.getTrigger());
+			}
+			
+			return subTask;
+		}
+		
+		@Override
+		public SpawnedScheduledTask get() {
+			return scanForChildTask();
+		}
+	});
+	
+	/**
+	 * Set a child {@linkplain SpawnedScheduledTask} to be run as a subtask whenever this task is run. This will trigger
+	 * the child task as a one shot task, AFTER each scheduled run of the parent task.<p> This task could be either declared as a Spring bean ( if autowired by type, then set the 
+	 * class type for it, else set a string with the bean name)
+	 * , or with a string depicting the fully qualified class name.
+	 * @param spawnChildTask either a {@linkplain String} (Spring bean name / FQ class name) or {@linkplain Class} (Spring bean type)
+	 * @see TaskContext#spawnedTask
+	 */
+	public void setChildTask(Object spawnChildTask) {
+		this.spawnedTask = spawnChildTask;
+	}
+	private Object spawnedTask;
+	
 	/**
 	 * This method will be invoked after a task is being cancelled.
 	 */
@@ -162,19 +296,35 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 		
 	private void runTask()
 	{
-		TaskContext context = key.copy();
+		final TaskContext context = getPassedContext() == null ? key.copy() : getPassedContext();
 		run(context);
-		
+		trigger.setLastExecutionTime(new Date());
 		SpawnedScheduledTask spawnedTask = spawnTask(context);
 		if (spawnedTask != null) 
 		{
-			getScheduler().scheduleAt(spawnedTask, spawnedTask.executeAfter().toDate());
+			spawnedTask.setPassedContext(context);
+			if (spawnedTask.cronExpression() != null) {
+				CronSequenceGenerator cron = new CronSequenceGenerator(spawnedTask.cronExpression(),
+						getTrigger().getTzone());
+				getScheduler().scheduleAt(spawnedTask, cron.next(trigger.getLastExecutionTime()));
+			} else{
+				getScheduler().scheduleAt(spawnedTask,
+						new Date(trigger.getLastExecutionTime().getTime() + spawnedTask.executeAfter().toMillis()));
+			}
+			
 			spawnedTasks.add(spawnedTask);
-			log.info("New child task spawned " + spawnedTask);
+			log.debug("New child task spawned " + spawnedTask.name());
+		}
+		else
+		{
+			spawnedTasks.remove(this);
 		}
 	}
-	
-	private void _emit(Data d)
+	//Override
+	TaskContext getPassedContext(){
+		return null;
+	}
+	private void doEmit(Data d)
 	{
 		if (d.isAddAsync()) {
 			publisher.ingest(d);
@@ -248,7 +398,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	{
 		return TimeUnit.MINUTES.toMillis(10);
 	}
-	private String getTimestampKey()
+	protected String getTimestampKey()
 	{
 		Clock clock = getScheduler().getClusterClock();
 		clock.setTimestamp(getTrigger().getNextExecutionTime().getTime());
@@ -257,10 +407,10 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	private volatile String timestampKey;
 	/**
 	 * Acquire cluster lock. This method is responsible for guaranteeing uniqueness in a scheduled task run
-	 * across the cluster.
+	 * across the cluster. Package private access.
 	 * @return
 	 */
-	protected boolean acquireLock() 
+	boolean acquireLock() 
 	{
 		timestampKey = getTimestampKey();
 		log.debug("timestampKey- "+timestampKey);
@@ -282,7 +432,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	private void setInLockingState(boolean isInLockingState) {
 		this.isInLockingState = isInLockingState;
 	}
-	private TaskSchedulerImpl getScheduler() {
+	TaskSchedulerImpl getScheduler() {
 		return scheduler;
 	}
 	/**
@@ -301,5 +451,11 @@ public abstract class AbstractScheduledTask implements ScheduledTask, ScheduledR
 	 */
 	public void setTrigger(DelegatingCronTrigger trigger) {
 		this.trigger = trigger;
+	}
+	private IMap<Serializable, Data> getContextMap() {
+		return contextMap;
+	}
+	public void setContextMap(IMap<Serializable, Data> contextMap) {
+		this.contextMap = contextMap;
 	}
 }
