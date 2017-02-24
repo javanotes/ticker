@@ -32,6 +32,7 @@ import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.support.CronSequenceGenerator;
@@ -57,7 +58,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 	private volatile TaskContext key;
 	private ScheduledFuture<?> future;
 	
-	private TaskSchedulerImpl scheduler;
+	private TaskSchedulerService scheduler;
 	protected DelegatingCronTrigger trigger;
 	
 	private IMap<Serializable, Data> contextMap;
@@ -85,7 +86,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 	}
 	public String name()
 	{
-		return getClass().getName()+"__task";
+		return CommonHelper.encodeClassName(getClass())+"__task";
 	}
 	public boolean cancel()
 	{
@@ -262,6 +263,8 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 			if(subTask != null){
 				subTask.setScheduler(AbstractScheduledTask.this.getScheduler());
 				subTask.setTrigger(AbstractScheduledTask.this.getTrigger());
+				
+				log.info("New child task spawned " + subTask.name());
 			}
 			
 			return subTask;
@@ -313,7 +316,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 			}
 			
 			spawnedTasks.add(spawnedTask);
-			log.debug("New child task spawned " + spawnedTask.name());
+			
 		}
 		else
 		{
@@ -432,14 +435,14 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable {
 	private void setInLockingState(boolean isInLockingState) {
 		this.isInLockingState = isInLockingState;
 	}
-	TaskSchedulerImpl getScheduler() {
+	TaskSchedulerService getScheduler() {
 		return scheduler;
 	}
 	/**
 	 * Set the {@linkplain TaskScheduler} instance to this task.
 	 * @param scheduler
 	 */
-	public void setScheduler(TaskSchedulerImpl scheduler) {
+	public void setScheduler(TaskSchedulerService scheduler) {
 		this.scheduler = scheduler;
 	}
 	private DelegatingCronTrigger getTrigger() {

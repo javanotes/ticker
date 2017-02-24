@@ -107,7 +107,7 @@ public class ApplicationContextHelper implements ApplicationContextAware{
 						try {
 							return newInstance(reader);
 						} catch (Throwable e) {
-							log.error("Unable to instantiate consumer found in full classpath scan => "+ e.getMessage());
+							log.warn("Unable to instantiate consumer found in full classpath scan => "+ e.getMessage());
 							log.debug("", e);
 							return null;
 						}

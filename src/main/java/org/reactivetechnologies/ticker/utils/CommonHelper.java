@@ -20,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.StringUtils;
 
 import com.hazelcast.internal.serialization.impl.JavaDefaultSerializers.JavaSerializer;
 import com.hazelcast.internal.serialization.impl.ObjectDataInputStream;
@@ -34,6 +36,18 @@ public class CommonHelper {
 	static
 	{
 		javaSerializer = new JavaSerializer(true, false);
+	}
+	public static String encodeClassName(Class<?> _class)
+	{
+		String[] pkgParts =StringUtils.delimitedListToStringArray(ClassUtils.getPackageName(_class), ".");
+		int i = 0;
+		StringBuilder sb = new StringBuilder();
+		for (; i < pkgParts.length-1; i++) {
+			String string = pkgParts[i];
+			sb.append(string.charAt(0)).append("_");
+		}
+		sb.append(pkgParts[i].toLowerCase()).append("_").append(_class.getSimpleName().toLowerCase());
+		return sb.toString();
 	}
 	public static Data deepCopy(Data orig) throws IOException
 	{

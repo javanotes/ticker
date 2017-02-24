@@ -43,9 +43,9 @@ import com.hazelcast.core.IMap;
  * @author esutdal
  *
  */
-public class TaskSchedulerImpl implements TaskScheduler {
+class TaskSchedulerService implements TaskScheduler {
 
-	private static final Logger log = LoggerFactory.getLogger(TaskSchedulerImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(TaskSchedulerService.class);
 	private final ConcurrentMap<String, AbstractScheduledTask> registry = new ConcurrentHashMap<>();
 	@Autowired
 	private ThreadPoolTaskScheduler delegate;
