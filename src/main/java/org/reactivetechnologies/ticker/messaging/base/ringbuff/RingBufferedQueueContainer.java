@@ -30,7 +30,6 @@ import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.AbstractQueueContainer;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
-import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
@@ -38,7 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import com.lmax.disruptor.RingBuffer;
 /**
- * @deprecated Experimental. The main challenge being the bounded nature of a ring buffer.
+ * @deprecated Experimental. The main challenge is the bounded nature of a ring buffer.
  * @author esutdal
  *
  */

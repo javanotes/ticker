@@ -40,6 +40,11 @@ import com.hazelcast.nio.ObjectDataOutput;
  */
 public class TextData extends Data {
 
+	@Override
+	public String toString() {
+		return "TextData [payload=" + payload + "]";
+	}
+
 	/**
 	 * 
 	 */

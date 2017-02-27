@@ -15,7 +15,7 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
-import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
 
 public interface TaskScheduler {
 
@@ -25,7 +25,7 @@ public interface TaskScheduler {
 	 * @param task
 	 * @return initial context for the task scheduled.
 	 */
-	TaskContext scheduleTask(AbstractScheduledTask task);
+	TaskContext scheduleTask(DistributedScheduledTask task);
 
 	/**
 	 * Schedule a one shot task execution at some given time in future.

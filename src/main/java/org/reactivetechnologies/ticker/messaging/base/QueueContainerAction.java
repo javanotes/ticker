@@ -13,16 +13,17 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.ticker.messaging.data.ext;
+package org.reactivetechnologies.ticker.messaging.base;
 
-import com.hazelcast.nio.serialization.DataSerializable;
-/**
- * A {@linkplain DataSerializable} which is also {@linkplain Comparable}.
- * @author esutdal
- *
- * @param <T>
- */
-public interface DataComparable<T> extends Comparable<T>, DataSerializable{
+import org.reactivetechnologies.ticker.messaging.Data;
 
-	T value();
+public interface QueueContainerAction<T extends Data> {
+
+	QueueContainerAction<T> copy();
+
+	/**
+	 * Fetch head if available.
+	 */
+	void process();
+
 }

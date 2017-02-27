@@ -19,7 +19,6 @@ import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
-import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +51,12 @@ class RingBufferedQueueContainerAction<T extends Data> extends AbstractDisruptor
 		b.setHazelWrap(getHazelWrap());
 		return b;
 	}
+	/**
+	 * Check if partitioning of ring buffer data is required, in case of more than one consumer.
+	 * @param seq
+	 * @param part
+	 * @return
+	 */
 	private boolean isAllowedPartition(long seq, int part)
 	{
 		if(consumer.parallelism() > 1)

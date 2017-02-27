@@ -15,17 +15,21 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
-import java.util.concurrent.TimeUnit;
+import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * A special {@linkplain ScheduledTask} that is run as a 'post scenario' of an {@linkplain AbstractScheduledTask}.
- * Thus it behaves as a child task. It will share the same context as used by the parent {@linkplain AbstractScheduledTask}, thus
- * leveraging a pre-post type task handling.
+ * A special {@linkplain ScheduledTask} that is run as a 'post scenario' of an {@linkplain DistributedScheduledTask}.
+ * Thus it behaves as a child task, which will be run on a schedule with a 'happens-after' guarantee. It will share the same context as used by the parent {@linkplain DistributedScheduledTask}, thus
+ * leveraging a post task handling. <p>Note: This type of task is, however, NOT distributed. This task is run locally (no cluster competition), on the node that has run the 
+ * parent {@linkplain DistributedScheduledTask}.
  * @author esutdal
  *
  */
 public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 
+	private static final Logger log = LoggerFactory.getLogger(SpawnedScheduledTask.class);
 	private volatile TaskContext passedContext;
 	/**
 	 * This time represents the actual execution time of the schedule, after loading has been done.
@@ -37,35 +41,45 @@ public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 	/**
 	 * This method is overridden so that a single spawned child task keeps recurring, once started 
 	 * by the parent task. Do not modify this, else there can be chances of multiple child schedule runs.
-	 * @see AbstractScheduledTask#spawnTask(TaskContext)
-	 */
+	 * @see DistributedScheduledTask#spawnTask(TaskContext)
+	 *//*
 	protected final SpawnedScheduledTask spawnTask(TaskContext context)
 	{
 		return null;
-	}
+	}*/
+	
 	/**
-	 * This method is overridden and set to true. The spawned task can only run on the instance 
-	 * that acquired the parent task. So no need to check here anymore.
+	 * By default the cron expression is ignored and {@link #executeAfter()} is looked up instead.
+	 * However, if this method is implemented with a valid CRON expression, it will override.
 	 */
 	@Override
-	final boolean acquireLock() 
-	{
-		return true;
-	}
 	public String cronExpression()
 	{
 		return null;
 		
 	}
-	protected final TimeUnit scheduleTimeunit() {
-		//noop
-		throw new UnsupportedOperationException();
-	}
 	@Override
-	TaskContext getPassedContext() {
-		return passedContext;
+	public void run() {
+		try 
+		{
+			doRun(passedContext);
+		} 
+		catch (Exception e) {
+			log.error("Internal Error!", e);
+		}
 	}
-	void setPassedContext(TaskContext passedContext) {
+	
+	/**
+	 * Used internally for passing TaskContext
+	 * @param passedContext
+	 */
+	final void setPassedContext(TaskContext passedContext) {
 		this.passedContext = passedContext;
 	}
+	@Override
+	public boolean cancel() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
 }

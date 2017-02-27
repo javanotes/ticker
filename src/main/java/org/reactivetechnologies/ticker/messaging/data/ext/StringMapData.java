@@ -21,11 +21,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.reactivetechnologies.ticker.messaging.data.MapData;
+
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
-
-public class StringKeyMap<V extends DataSerializable> implements DataSerializable, Map<java.lang.String, V> {
+/**
+ * An extension of {@linkplain MapData} with String keys.
+ * @author esutdal
+ *
+ * @param <V>
+ */
+public class StringMapData<V extends DataSerializable> implements DataSerializable, Map<java.lang.String, V> {
 
 	private MapData<StringKey, V> map = new MapData<>();
 	@Override

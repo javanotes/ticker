@@ -15,15 +15,34 @@
  */
 package org.reactivetechnologies.ticker.messaging.base.ringbuff;
 
-import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 
-interface QueueContainerAction<T extends Data> {
+import com.lmax.disruptor.EventFactory;
+/**
+ * @deprecated For use in Disruptor
+ * @author esutdal
+ *
+ */
+public class DataWrapperEvent {
+	public DataWrapperEvent() {
+		
+	}
 
-	QueueContainerAction<T> copy();
+	public DataWrapper getEvent() {
+		return event;
+	}
 
-	/**
-	 * Fetch head if available.
-	 */
-	void process();
+	public void setEvent(DataWrapper event) {
+		this.event = event;
+	}
 
+	private DataWrapper event;
+	
+	public final static EventFactory<DataWrapperEvent> EVENT_FACTORY = new EventFactory<DataWrapperEvent>()
+    {
+        public DataWrapperEvent newInstance()
+        {
+            return new DataWrapperEvent();
+        }
+    };
 }

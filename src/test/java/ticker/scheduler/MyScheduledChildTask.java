@@ -19,7 +19,9 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
+import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.scheduler.Clock;
+import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
 import org.reactivetechnologies.ticker.scheduler.SpawnedScheduledTask;
 
 public class MyScheduledChildTask extends SpawnedScheduledTask {
@@ -31,7 +33,11 @@ public class MyScheduledChildTask extends SpawnedScheduledTask {
 	@Override
 	public void run(TaskContext context) {
 		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - MyScheduledChildTask.run()");
-		//context.emit(d);
+		String s = (String) context.getTransient(MyScheduledTask.someKey);
+		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - Got transient: "+s);
+		
+		Data d = context.get(MyScheduledTask.someKey);
+		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - Got data: "+d);
 	}
 
 	@Override

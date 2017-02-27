@@ -26,7 +26,7 @@ SOFTWARE.
 *
 * ============================================================================
 */
-package org.reactivetechnologies.ticker.messaging.data.ext;
+package org.reactivetechnologies.ticker.messaging.data;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -36,17 +36,20 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.data.ext.DataComparable;
 import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
 import org.springframework.util.Assert;
 
+import com.hazelcast.core.IMap;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.DataSerializable;
 
 /**
- * {@linkplain Data} class that encapsulates a {@linkplain Map}. This is a Hazelcast specific sorted map data structure
- * that can be used as an {@linkplain IMap} entry value. This class can be extended for creating Cassandra like 'supercolumn'
- * data models.
+ * A {@linkplain Data} extension that encapsulates a {@linkplain Map} data structure. The underlying implementation is a 'Hazelcast friendly' sorted map data structure
+ * that can be used as an {@linkplain IMap} entry (key/value). The local entries in Hazlecast {@linkplain IMap} are not sorted. This data structure can thus be used 
+ * to have locally sorted {@linkplain Map} entries.<p>Note: This class can be extended for creating Apache Cassandra like data models with composite keys of <i>partitioning</i> (used for distribution)
+ * and <i>clustering</i> (used for sorting).
  * @param <K>
  * @param <V>
  */

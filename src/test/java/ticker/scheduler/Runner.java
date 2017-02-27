@@ -15,6 +15,8 @@
  */
 package ticker.scheduler;
 
+import java.util.Date;
+
 import org.reactivetechnologies.ticker.scheduler.TaskScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -29,7 +31,7 @@ public class Runner implements CommandLineRunner {
 		MyScheduledTask task = new MyScheduledTask("*/5 * * * * *");
 		task.setChildTask(MyScheduledChildTask.class);
 		scheduler.scheduleTask(task);
-		System.out.println("Registered task");
+		System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - Registered task ...");
 	}
 
 }

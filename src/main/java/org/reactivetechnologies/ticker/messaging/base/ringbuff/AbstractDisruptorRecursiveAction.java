@@ -5,9 +5,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.base.QueueContainerAction;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
-import org.reactivetechnologies.ticker.messaging.data.DataWrapperEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

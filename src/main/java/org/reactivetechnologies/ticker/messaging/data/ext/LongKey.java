@@ -48,7 +48,16 @@ public class LongKey implements DataComparable<Long> {
 		this.value = value;
 	}
 
+	public LongKey() {
+	}
+
+	public LongKey(long value) {
+		super();
+		this.value = value;
+	}
+
 	private long value;
+
 	@Override
 	public int compareTo(Long o) {
 		return Long.compare(value, o);

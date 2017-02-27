@@ -15,10 +15,10 @@
  */
 package org.reactivetechnologies.ticker.scheduler;
 
-import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
 
 /**
- * A keyed task which is to be scheduled and run.
+ * A distributed task instance which can be scheduled for run.
  * @author esutdal
  *
  */

@@ -34,6 +34,13 @@ public abstract class Data implements DataSerializable, Serializable{
 	private short redeliveryCount = 0;
 	private byte processState = STATE_OPEN;
 	
+	@Override
+	public String toString() {
+		return "Data [correlationID=" + correlationID + ", timestamp=" + timestamp + ", destination=" + destination
+				+ ", replyTo=" + replyTo + ", redelivered=" + redelivered + ", expiryMillis=" + expiryMillis
+				+ ", redeliveryCount=" + redeliveryCount + ", processState=" + processState + "]";
+	}
+
 	public byte getProcessState() {
 		return processState;
 	}

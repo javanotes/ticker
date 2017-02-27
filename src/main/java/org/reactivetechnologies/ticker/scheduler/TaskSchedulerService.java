@@ -26,9 +26,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
-import org.reactivetechnologies.ticker.datagrid.HazelcastOperationsFactoryBean;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
-import org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask.TaskContext;
+import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
@@ -47,12 +46,13 @@ class TaskSchedulerService implements TaskScheduler {
 
 	private static final Logger log = LoggerFactory.getLogger(TaskSchedulerService.class);
 	private final ConcurrentMap<String, AbstractScheduledTask> registry = new ConcurrentHashMap<>();
+	
 	@Autowired
 	private ThreadPoolTaskScheduler delegate;
 	@Autowired 
 	private Publisher pub;
 	@Autowired
-	private HazelcastOperationsFactoryBean opsFact;
+	private HazelcastOperations opsFact;
 	
 	/**
 	 * Singleton instance of {@linkplain HazelcastOperations}.
@@ -60,7 +60,7 @@ class TaskSchedulerService implements TaskScheduler {
 	 */
 	public HazelcastOperations getHazelcastOps()
 	{
-		return opsFact.getObject();
+		return opsFact;
 	}
 	
 	@PostConstruct
@@ -143,35 +143,21 @@ class TaskSchedulerService implements TaskScheduler {
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#scheduleTask(org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask)
 	 */
 	@Override
-	public TaskContext scheduleTask(AbstractScheduledTask task)
+	public TaskContext scheduleTask(DistributedScheduledTask task)
 	{
 		TaskContext initialCtx = task.newTaskContext();
 		task.setTaskKey(initialCtx);
 		DelegatingCronTrigger cronTrigg = new DelegatingCronTrigger(task.cronExpression(), getClusterClock().getZone());
 		task.setScheduler(this);
 		task.setTrigger(cronTrigg);
-		task.setContextMap(getHazelcastOps().getMap(task.name()));
+		task.setContextMap(getHazelcastOps());
 		task.publisher = pub;
 		ScheduledFuture<?> future = schedule(task, cronTrigg);
 		task.setCancellable(future);
 		registry.put(initialCtx.getKeyParam(), task);
 		return initialCtx;
 	}
-	/* (non-Javadoc)
-	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#scheduleSingleTask(org.reactivetechnologies.ticker.scheduler.AbstractScheduledTask)
-	 */
-	//@Override
-	/*public TaskContext scheduleSingleTask(AbstractScheduledTask task)
-	{
-		TaskContext initialCtx = task.newTaskContext();
-		task.setTaskKey(initialCtx);
-		ScheduledFuture<?> future = schedule(task, new CronTrigger(task.cronExpression()));
-		task.setCancellable(future);
-		task.setScheduler(this);
-		registry.put(initialCtx.getKeyParam(), task);
-		return initialCtx;
-	}*/
-	
+		
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#cancelTask(org.reactivetechnologies.ticker.scheduler.TaskContext, boolean)
 	 */
@@ -180,9 +166,16 @@ class TaskSchedulerService implements TaskScheduler {
 	{
 		if(registry.containsKey(taskId.getKeyParam()))
 		{
-			return cancelSpawnedTasks ? registry.get(taskId.getKeyParam()).cancelSpawned() : registry.get(taskId.getKeyParam()).cancel();
+			cancelTask(registry.remove(taskId.getKeyParam()), cancelSpawnedTasks);
 		}
 		return false;
+	}
+	private void cancelTask(AbstractScheduledTask task, boolean cancelSpawnedTasks)
+	{
+		if(cancelSpawnedTasks && task instanceof DistributedScheduledTask)
+			((DistributedScheduledTask) task).cancelSpawned();
+		else
+			task.cancel();
 	}
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.scheduler.SchedulerManager#destroy()
@@ -194,7 +187,7 @@ class TaskSchedulerService implements TaskScheduler {
 		log.info("Destroying all schedulers registered ..");
 		for(AbstractScheduledTask task : registry.values())
 		{
-			task.cancel();
+			cancelTask(task, true);
 		}
 	}
 
