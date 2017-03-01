@@ -24,7 +24,6 @@ import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanInitializationException;
-import org.springframework.boot.autoconfigure.hazelcast.HazelcastInstanceFactory;
 import org.springframework.boot.autoconfigure.hazelcast.HazelcastProperties;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
@@ -41,8 +40,8 @@ class HazelcastInstanceWrapper {
 	static final String HZ_MAP_SERVICE = "hz:impl:mapService";
 	public static final String NODE_INSTANCE_ID = "keyval.hazelcast.id";
 	
-	public static final String HZ_GROUP_NAME = "Ticker";
-	public static final String HZ_GROUP_PWD = "@dmIn123#";
+	private static final String groupName = "Ticker";
+	private static final String groupPwd = "@dmIn123#";
 	
 	private final HazelcastProperties hazelcastProperties;
 	
@@ -72,10 +71,12 @@ class HazelcastInstanceWrapper {
 	 * Set properties and etc..
 	 * @param hzConfig
 	 */
-	private void setInstanceId(Config hzConfig)
+	private void setInstanceProperties(Config hzConfig)
 	{
-		hzConfig.getGroupConfig().setName(HZ_GROUP_NAME);
-		hzConfig.getGroupConfig().setPassword(HZ_GROUP_PWD);
+		if (!StringUtils.hasText(hzConfig.getGroupConfig().getName()))
+			hzConfig.getGroupConfig().setName(groupName);
+		if (!StringUtils.hasText(hzConfig.getGroupConfig().getPassword()))
+			hzConfig.getGroupConfig().setPassword(groupPwd);
 		
 		hzConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
 		if(StringUtils.hasText(instanceId))
@@ -93,11 +94,14 @@ class HazelcastInstanceWrapper {
 		if (config != null) 
 		{
 			hzConfig = resolveConfigLocation(config);
-			setInstanceId(hzConfig);
 			
-			return new HazelcastInstanceFactory(hzConfig).getHazelcastInstance();
 		}
-		setInstanceId(hzConfig);
+		else
+		{
+			hzConfig.getGroupConfig().setName(groupName);
+			hzConfig.getGroupConfig().setPassword(groupPwd);
+		}
+		setInstanceProperties(hzConfig);
 		return Hazelcast.newHazelcastInstance(hzConfig);
 	}
 

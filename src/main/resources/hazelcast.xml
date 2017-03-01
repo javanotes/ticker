@@ -24,9 +24,8 @@
            xmlns="http://www.hazelcast.com/schema/config"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     
-    <!-- group details will be overridden from application -->
     <group>
-        <name>dev</name>
+        <name>Ticker</name>
         <password>dev-pass</password>
     </group>
     <management-center enabled="false">http://localhost:8080/mancenter</management-center>
