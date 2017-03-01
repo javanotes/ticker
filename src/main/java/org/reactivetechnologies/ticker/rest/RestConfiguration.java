@@ -18,14 +18,12 @@ package org.reactivetechnologies.ticker.rest;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import org.restexpress.exception.DefaultExceptionMapper;
 import org.restexpress.exception.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -67,29 +65,22 @@ public class RestConfiguration {
 			return ex;
 		}
 	}
-	@Value("${server.context-path}")
+	@Value("${rest.server.context-path}")
 	private String baseUrl;
-	@Value("${server.port}")
+	@Value("${rest.server.port}")
 	private int port;
+	
+	@ConditionalOnProperty(name = "rest.enable", havingValue = "true")
 	@Bean
-	RestServer server()
+	RestListener server()
 	{
-		RestServer server = new RestServer();
+		RestListener server = new RestListener();
 		server.setExceptionMap(new ServiceExceptionMapper());
 		server.setBaseUrl(baseUrl);
 		server.setPort(port);
 		return server;
 	}
-	@PostConstruct
-	void init()
-	{
-		server().startServer();
-	}
-	@PreDestroy
-	void destroy()
-	{
-		server().stopServer();
-	}
+	
 	@Bean
 	AddHandler add()
 	{
@@ -105,4 +96,5 @@ public class RestConfiguration {
 	{
 		return new IngestHandler();
 	}
+	
 }

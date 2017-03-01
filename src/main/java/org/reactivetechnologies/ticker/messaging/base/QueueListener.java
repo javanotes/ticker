@@ -22,8 +22,9 @@ public interface QueueListener<T extends Data> extends Consumer<T> {
 	 */
 	String identifier();
 	/**
-	 * Max parallelism to achieve
-	 * @return
+	 * Maximum parallelism to be achieved. This is a best effort
+	 * based on the configured actor thread pool.
+	 * @return 
 	 */
 	int parallelism();
 	

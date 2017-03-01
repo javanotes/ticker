@@ -109,7 +109,7 @@ abstract class HandlerBase {
 		
 	}
 	protected RequestBody parse(Request req, Response res) {
-		String queue = (String) req.getHeader(RestServer.URL_VAL_QNAME);
+		String queue = (String) req.getHeader(RestListener.URL_VAL_QNAME);
 		Assert.notNull(queue);
 		
 		ByteBuffer bb = req.getBodyAsByteBuffer();

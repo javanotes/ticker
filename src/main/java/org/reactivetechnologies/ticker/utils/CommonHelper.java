@@ -18,6 +18,8 @@ package org.reactivetechnologies.ticker.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.springframework.util.ClassUtils;
@@ -61,5 +63,52 @@ public class CommonHelper {
 		} catch (IOException e) {
 			throw e;
 		}
+	}
+	
+	private static boolean isPortAvailable(String host, int port)
+	{
+		if(host != null)
+		{
+			try 
+			{
+				new ServerSocket(port, 50, InetAddress.getByName(host)).close();
+				return true;
+			} 
+			catch (Exception e) {}
+		}
+		else
+		{
+			try {
+				new ServerSocket(port, 50).close();
+				return true;
+			} catch (Exception e) {}
+		}
+		return false;
+	}
+	/**
+	 * Scan for available port till a maxOffset.
+	 * @param port
+	 * @param maxOffset
+	 * @param host
+	 * @return available port or -1.
+	 */
+	public static int scanAvailablePort(int port, int maxOffset, String host)
+	{
+		for (int offset = 0; offset < maxOffset; offset++) {
+			port += offset;
+			if(isPortAvailable(host, port))
+				return port;
+		}
+		return -1;
+	}
+	/**
+	 * Scan for available port till a maxOffset.
+	 * @param port
+	 * @param maxOffset
+	 * @return
+	 */
+	public static int scanAvailablePort(int port, int maxOffset)
+	{
+		return scanAvailablePort(port, maxOffset, null);
 	}
 }

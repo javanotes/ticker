@@ -15,11 +15,13 @@
  */
 package org.reactivetechnologies.ticker.rest;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.restexpress.RestExpress;
 import org.restexpress.route.Route;
 import org.slf4j.Logger;
@@ -30,16 +32,16 @@ import org.springframework.boot.context.embedded.PortInUseException;
 
 import io.netty.channel.Channel;
 
-class RestServer extends RestExpress {
+class RestListener extends RestExpress {
 
-	private static final Logger log = LoggerFactory.getLogger(RestServer.class);
+	private static final Logger log = LoggerFactory.getLogger(RestListener.class);
 	
 	public static final String URL_VAL_QNAME = "queue";
 	public static final String URL_ADD = "/add/{"+URL_VAL_QNAME+"}";
 	public static final String URL_APPEND = "/append/{"+URL_VAL_QNAME+"}";
 	public static final String URL_INGEST = "/ingest/{"+URL_VAL_QNAME+"}";
 
-	@Value("${server.port-offset:100}")
+	@Value("${rest.server.port-offset:100}")
 	private int portOffset;
 
 	@Autowired
@@ -57,6 +59,16 @@ class RestServer extends RestExpress {
 	{
 		for(Route _r : r)
 			printRoute(_r);
+	}
+	@PostConstruct
+	void init()
+	{
+		startServer();
+	}
+	@PreDestroy
+	void destroy()
+	{
+		stopServer();
 	}
 	public void startServer()
 	{
@@ -82,35 +94,18 @@ class RestServer extends RestExpress {
 
 		return bind(new InetSocketAddress(port));
 	}
-	private static boolean isPortAvailable(String host, int port)
-	{
-		if(host != null)
-		{
-			try {
-				new ServerSocket(port, 50, InetAddress.getByName(host)).close();
-				return true;
-			} catch (Exception e) {}
-		}
-		else
-		{
-			try {
-				new ServerSocket(port).close();
-				return true;
-			} catch (Exception e) {}
-		}
-		return false;
-	}
+	
 	private int getAvailablePort(int port) {
 		int _port = port;
 		String host = null;
 		if(hasHostname())
 			host = getHostname();
 		
-		for (int offset = 0; offset < portOffset; offset++) {
-			_port += offset;
-			if(isPortAvailable(host, _port))
-				return _port;
-		}
+		_port = CommonHelper.scanAvailablePort(port, portOffset, host);
+
+		if(_port != -1)
+			return _port;
+		
 		throw new PortInUseException(port)
 		{
 			/**
@@ -130,7 +125,7 @@ class RestServer extends RestExpress {
 		log.info("REST transport stopped..");
 	}
 	public static void main(String[] args) throws InterruptedException {
-		RestServer s = new RestServer();
+		RestListener s = new RestListener();
 		s.startServer();
 		Thread.sleep(2000);
 		s.stopServer();

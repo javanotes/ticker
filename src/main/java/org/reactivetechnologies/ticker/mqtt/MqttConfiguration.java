@@ -13,24 +13,25 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.ticker;
+package org.reactivetechnologies.ticker.mqtt;
 
-import org.reactivetechnologies.ticker.messaging.MessagingConfiguration;
-import org.reactivetechnologies.ticker.mqtt.MqttConfiguration;
-import org.reactivetechnologies.ticker.rest.RestConfiguration;
-import org.reactivetechnologies.ticker.scheduler.SchedulerConfiguration;
-import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({SchedulerConfiguration.class, MessagingConfiguration.class, RestConfiguration.class, MqttConfiguration.class})
-public class TickerConfiguration {
-	
+public class MqttConfiguration {
+
+	@ConditionalOnProperty(name = "mqtt.enable", havingValue = "true")
 	@Bean
-	ApplicationContextHelper ctxHelper()
+	MqttListener mqtt()
 	{
-		return new ApplicationContextHelper();
+		return new MqttListener();
 	}
+	@Bean
+	PublishDataDistributor mqttHandler()
+	{
+		return new PublishDataDistributor();
+	}
+	
 }

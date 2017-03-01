@@ -68,6 +68,11 @@ public abstract class AbstractQueueListener<T extends Data> implements QueueList
 	public void destroy() {
 		//noop
 	}
+	@Override
+	public void init() {
+		// noop
+		
+	}
 	/**
 	 * Return false if a dedicated thread pool is requested for this consumer. When using a
 	 * dedicated pool, the worker thread is not configurable. It will be kept equal to the number of cores available.
@@ -121,11 +126,6 @@ public abstract class AbstractQueueListener<T extends Data> implements QueueList
 		return UUID.randomUUID() + "";
 	}
 
-	/**
-	 * To be overridden to increase concurrency.
-	 * 
-	 * @return
-	 */
 	public int parallelism() {
 		return 1;
 	}
