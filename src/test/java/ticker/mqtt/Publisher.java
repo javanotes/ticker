@@ -16,11 +16,16 @@
 package ticker.mqtt;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -33,43 +38,56 @@ public class Publisher implements Closeable
 	public static final String BROKER_URL = "tcp://localhost:1883";
 	public static final String TOPIC_TEMPERATURE = "home/LWT";
 	
-    private MqttClient client;
+	public static final int MAX_INFLIGHT = 100;
+	public static final int QoS = 0;
+	public static final int NO_OF_ITEMS = 1000;
+    
     private Random rand = new Random();
 
+    private List<MqttClient> clientList = Collections.synchronizedList(new LinkedList<>());
+    ThreadLocal<MqttClient> clients = ThreadLocal.withInitial(new Supplier<MqttClient>() {
+    	
+		@Override
+		public MqttClient get() {
+			String clientId = UUID.randomUUID().toString() + "-pub";
+	         try
+	         {
+	        	 MqttClient client = new MqttClient(BROKER_URL, clientId);
+	              
+	              MqttConnectOptions options = new MqttConnectOptions();
+	              options.setCleanSession(false);
+	              options.setWill(client.getTopic(TOPIC_TEMPERATURE),
+	              "I'm gone".getBytes(), 2, true);
+	               
+	              options.setMaxInflight(MAX_INFLIGHT);
+	              System.out.println("connecting.."+clientId);
+	              client.connect(options);
+	              System.out.println("connected ");
+	              clientList.add(client);
+	              	              
+	            return client;
+	         }
+	         catch (MqttException e)
+	        {
+	             e.printStackTrace();
+	         }
+			return null;
+		}
+	});
     
-    String open() throws MqttException
-    {
-    	 String clientId = UUID.randomUUID().toString() + "-pub";
-         try
-         {
-              client = new MqttClient(BROKER_URL, clientId);
-              
-              MqttConnectOptions options = new MqttConnectOptions();
-              options.setCleanSession(false);
-              options.setWill(client.getTopic(TOPIC_TEMPERATURE),
-              "I'm gone".getBytes(), 2, true);
-               
-              options.setMaxInflight(100);
-              client.connect(options);
-         }
-         catch (MqttException e)
-        {
-             throw e;
-         }
-		return clientId;
-    }
+    
     void publish() throws MqttException
     {
     	publishTemperature();
     }
     private void publishTemperature() throws MqttException {
-        final MqttTopic temperatureTopic = client.getTopic(TOPIC_TEMPERATURE);
+        final MqttTopic temperatureTopic = clients.get().getTopic(TOPIC_TEMPERATURE);
 
         final int temperatureNumber = rand.nextInt(50);
         final String temperature = temperatureNumber + "°C";
         //System.out.println("temperature => "+temperature);
         MqttMessage msg = new MqttMessage(temperature.getBytes(StandardCharsets.UTF_8));
-        msg.setQos(0);
+        msg.setQos(QoS);
         temperatureTopic.publish(msg);
     }
     
@@ -81,23 +99,39 @@ public class Publisher implements Closeable
 
 
 	@Override
-	public void close() throws IOException {
-		try {
-			client.disconnect();
-			client.close();
-		} catch (MqttException e) {
-			throw new IOException(e);
+	public void close() {
+		for(MqttClient c : clientList)
+		{
+			try {
+				c.disconnect();
+				c.close();
+			} catch (MqttException e) {
+				//throw new IOException(e);
+			}
+			
 		}
 	}
 	
 	public static void main(String[] args) throws Exception {
 		Publisher p = new Publisher();
-		p.open();
-		
+		ExecutorService e = Executors.newFixedThreadPool(4);
 		long start = System.currentTimeMillis();
-		for(int i=0; i<MqttListenerTest.NO_OF_ITEMS; i++)
-			p.publish();
-		
+		for(int i=0; i<NO_OF_ITEMS; i++){
+			e.submit(new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
+						p.publish();
+					} catch (MqttException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			
+		}
+		e.shutdown();
+		e.awaitTermination(1, TimeUnit.HOURS);
 		long time = System.currentTimeMillis() - start;
 		long secs = TimeUnit.MILLISECONDS.toSeconds(time);
 		System.out.println("Time taken: " + secs + " secs " + (time - TimeUnit.SECONDS.toMillis(secs)) + " ms");

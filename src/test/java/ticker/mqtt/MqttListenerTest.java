@@ -21,7 +21,7 @@ import akka.actor.Inbox;
 @SpringBootTest(classes = {Ticker.class})
 public class MqttListenerTest {
 
-	public static final int NO_OF_ITEMS = 100000;
+	
 			
 	@Autowired
 	Inbox inbox;
@@ -33,7 +33,7 @@ public class MqttListenerTest {
 	@Test
 	public void pollFromQueue() throws TimeoutException
 	{
-		CountDownLatch l = new CountDownLatch(NO_OF_ITEMS);
+		CountDownLatch l = new CountDownLatch(Publisher.NO_OF_ITEMS);
 		containerSupport.registerListener(new Listener(l));
 		long start = System.currentTimeMillis();
 		containerSupport.start();

@@ -15,31 +15,23 @@
  */
 package org.reactivetechnologies.ticker.mqtt;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.reactivetechnologies.io.moquette.server.Server;
 import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.embedded.PortInUseException;
-import org.springframework.util.ResourceUtils;
-import org.springframework.util.StringUtils;
 
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
-import io.moquette.server.Server;
-import io.moquette.server.config.FileResourceLoader;
 import io.moquette.server.config.IConfig;
-import io.moquette.server.config.MemoryConfig;
-import io.moquette.server.config.ResourceLoaderConfig;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
 import io.moquette.spi.security.ISslContextCreator;
@@ -49,21 +41,13 @@ class MqttListener extends Server {
 	private static Logger log = LoggerFactory.getLogger(MqttListener.class);
 	@Autowired
 	TransportInterceptor interceptor;
+	@Autowired
+	private IConfig cfg;
 
-	@Value("${mqtt.conf.file:}")
-	private String conf;
+	
 	@PostConstruct
 	public void init() throws IOException 
 	{
-		IConfig cfg = null;
-		if(StringUtils.hasText(conf))
-		{
-			File f = ResourceUtils.getFile(conf);
-			cfg = new ResourceLoaderConfig(new FileResourceLoader(f));
-		}
-		else
-			cfg = new MemoryConfig(new Properties());//default config
-		
 		startServer(cfg, Arrays.asList(interceptor));
 	}
 

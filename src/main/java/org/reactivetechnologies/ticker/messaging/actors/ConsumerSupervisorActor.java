@@ -35,6 +35,7 @@ import com.hazelcast.core.EntryEventType;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import akka.actor.ActorRef;
 import akka.actor.AllForOneStrategy;
@@ -54,7 +55,7 @@ import scala.concurrent.duration.Duration;
  *
  * @param <T>
  */
-class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements EntryAddedListener<Serializable, T> {
+class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements EntryAddedListener<Serializable, T>,EntryUpdatedListener<Serializable, T> {
 
 	private static final Logger log = LoggerFactory.getLogger(ConsumerSupervisorActor.class);
 	private ActorRef workerPool;
@@ -234,8 +235,12 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	@Override
 	public void entryAdded(EntryEvent<Serializable, T> event) {
 		log.debug("New entry received:: "+event);
-		DataWrapper consume = new DataWrapper(event.getValue(), false, event.getKey());
-		
+		onEntryEvent(event.getValue(), event.getKey());
+	}
+	
+	private void onEntryEvent(T val, Serializable key)
+	{
+		DataWrapper consume = new DataWrapper(val, false, key);
 		delegateExclusively(consume);
 	}
 	
@@ -276,6 +281,11 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	}
 	public void setCheckExclusiveAccess(boolean checkExclusiveAccess) {
 		this.checkExclusiveAccess = checkExclusiveAccess;
+	}
+	@Override
+	public void entryUpdated(EntryEvent<Serializable, T> event) {
+		log.debug("Modified entry received:: "+event);
+		onEntryEvent(event.getValue(), event.getKey());
 	}
 	
 }

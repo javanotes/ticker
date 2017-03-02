@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.moquette.interception.messages.InterceptPublishMessage;
+import io.moquette.parser.proto.messages.AbstractMessage.QOSType;
 
 class PublishDataDistributor extends TransportInterceptor {
 	
@@ -32,8 +33,11 @@ class PublishDataDistributor extends TransportInterceptor {
 	@Override
     public void onPublish(InterceptPublishMessage msg) {
 		MqttData data = new MqttData(msg);
-		data.setAddAsync(true);
-		tickerPub.ingest(data);
+		if(msg.getQos() == QOSType.MOST_ONE)
+			tickerPub.ingest(data);//fire and forget
+		else
+			tickerPub.offer(data);
+		
 		LOG.debug("Fired MQTT request "+data+" Payload len: "+data.getPayload().length);
 	}
 }
