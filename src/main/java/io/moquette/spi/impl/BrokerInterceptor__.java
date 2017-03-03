@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
 
 import io.moquette.interception.InterceptHandler;
 import io.moquette.interception.Interceptor;
@@ -26,20 +26,27 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * An interceptor that execute the interception tasks asynchronously.
  *
  * @author Wagner Macedo
  */
-final class BrokerInterceptor implements Interceptor {
+final class BrokerInterceptor__ implements Interceptor {
     private final List<InterceptHandler> handlers;
     private final ExecutorService executor;
 
-    BrokerInterceptor(List<InterceptHandler> handlers) {
+    BrokerInterceptor__(List<InterceptHandler> handlers) {
         this.handlers = new CopyOnWriteArrayList<>(handlers);
-        //executor = Executors.newFixedThreadPool(1);
-        executor = Executors.newCachedThreadPool();
+        executor = Executors.newCachedThreadPool(new ThreadFactory() {
+			int n=0;
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread t = new Thread(r, "Mqtt.Broker.Cached.Thread-"+(n++));
+				return t;
+			}
+		});
     }
 
     /**

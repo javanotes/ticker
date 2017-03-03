@@ -27,6 +27,7 @@ import org.reactivetechnologies.ticker.messaging.dto.__CommitRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__DeadLetterRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RetryRequest;
+import org.reactivetechnologies.ticker.mqtt.MqttData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -225,10 +226,21 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 	 * @param immediate 
 	 */
 	private void commitDelivery(DataWrapper msg, boolean immediate) {
+		if(msg.data instanceof MqttData)
+			notifyMqttAck((MqttData) msg.data);
+		
+		removeEntry(msg.key, immediate);
+	}
+	
+	private void notifyMqttAck(MqttData data) {
+				
+	}
+	private void removeEntry(Serializable key, boolean immediate)
+	{
 		if(immediate)
-			queueMap.remove(msg.key);
+			queueMap.remove(key);
 		else
-			queueMap.removeAsync(msg.key);
+			queueMap.removeAsync(key);
 		log.debug("Commit..");
 	}
 

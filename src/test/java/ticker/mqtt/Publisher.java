@@ -39,8 +39,8 @@ public class Publisher implements Closeable
 	public static final String TOPIC_TEMPERATURE = "home/LWT";
 	
 	public static final int MAX_INFLIGHT = 100;
-	public static final int QoS = 0;
-	public static final int NO_OF_ITEMS = 1000;
+	public static final int QoS = 1;
+	public static final int NO_OF_ITEMS = 2000;
     
     private Random rand = new Random();
 
@@ -84,10 +84,11 @@ public class Publisher implements Closeable
         final MqttTopic temperatureTopic = clients.get().getTopic(TOPIC_TEMPERATURE);
 
         final int temperatureNumber = rand.nextInt(50);
-        final String temperature = temperatureNumber + "°C";
-        //System.out.println("temperature => "+temperature);
+        final String temperature = temperatureNumber + " deg C";
+        //System.err.println("temperature => "+temperature);
         MqttMessage msg = new MqttMessage(temperature.getBytes(StandardCharsets.UTF_8));
         msg.setQos(QoS);
+        //temperatureTopic.publish(msg);
         temperatureTopic.publish(msg);
     }
     

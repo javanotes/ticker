@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.server;
+package io.moquette.server.netty;
 
 import static io.moquette.BrokerConstants.DISABLED_PORT_BIND;
 import static io.moquette.BrokerConstants.PORT_PROPERTY_NAME;
@@ -27,7 +27,6 @@ import java.util.List;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
-import org.reactivetechnologies.io.moquette.spi.impl.ProtocolProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +71,7 @@ import io.netty.util.concurrent.Future;
  *
  * @author andrea
  */
-public class NettyAcceptor /*implements ServerAcceptor*/ {
+public class NettyAcceptor__ /*implements ServerAcceptor*/ {
     
     private static final String MQTT_SUBPROTOCOL_CSV_LIST = "mqtt, mqttv3.1, mqttv3.1.1";
 
@@ -105,34 +104,13 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         abstract void init(ChannelPipeline pipeline) throws Exception;
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(NettyAcceptor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NettyAcceptor__.class);
     
     EventLoopGroup m_bossGroup;
     EventLoopGroup m_workerGroup;
     BytesMetricsCollector m_bytesMetricsCollector = new BytesMetricsCollector();
     MessageMetricsCollector m_metricsCollector = new MessageMetricsCollector();
-
-    //@Override
-    public void initialize(ProtocolProcessor processor, IConfig props, ISslContextCreator sslCtxCreator) throws IOException {
-        m_bossGroup = new NioEventLoopGroup();
-        m_workerGroup = new NioEventLoopGroup();
-        final NettyMQTTHandler handler = new NettyMQTTHandler(processor);
-        
-        initializePlainTCPTransport(handler, props);
-        initializeWebSocketTransport(handler, props);
-        String sslTcpPortProp = props.getProperty(BrokerConstants.SSL_PORT_PROPERTY_NAME);
-        String wssPortProp = props.getProperty(BrokerConstants.WSS_PORT_PROPERTY_NAME);
-        if (sslTcpPortProp != null || wssPortProp != null) {
-            SSLContext sslContext = sslCtxCreator.initSSLContext();
-            if (sslContext == null) {
-                LOG.error("Can't initialize SSLHandler layer! Exiting, check your configuration of jks");
-                return;
-            }
-            initializeSSLTCPTransport(handler, props, sslContext);
-            initializeWSSTransport(handler, props, sslContext);
-        }
-    }
-
+    
     private void initFactory(String host, int port, final PipelineInitializer pipeliner) {
         ServerBootstrap b = new ServerBootstrap();
         b.group(m_bossGroup, m_workerGroup)
@@ -163,7 +141,7 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         }
     }
     
-    private void initializePlainTCPTransport(final NettyMQTTHandler handler, IConfig props) throws IOException {
+    private void initializePlainTCPTransport(final NettyMQTTHandler__ handler, IConfig props) throws IOException {
         final MoquetteIdleTimeoutHandler timeoutHandler = new MoquetteIdleTimeoutHandler();
         String host = props.getProperty(BrokerConstants.HOST_PROPERTY_NAME);
         String tcpPortProp = props.getProperty(PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
@@ -177,7 +155,6 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
             void init(ChannelPipeline pipeline) {
                 pipeline.addFirst("idleStateHandler", new IdleStateHandler(0, 0, Constants.DEFAULT_CONNECT_TIMEOUT));
                 pipeline.addAfter("idleStateHandler", "idleEventHandler", timeoutHandler);
-//                pipeline.addLast("logger", new LoggingHandler("Netty", LogLevel.ERROR));
                 pipeline.addFirst("bytemetrics", new BytesMetricsHandler(m_bytesMetricsCollector));
                 pipeline.addLast("decoder", new MQTTDecoder());
                 pipeline.addLast("encoder", new MQTTEncoder());
@@ -188,7 +165,7 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         });
     }
     
-    private void initializeWebSocketTransport(final NettyMQTTHandler handler, IConfig props) throws IOException {
+    private void initializeWebSocketTransport(final NettyMQTTHandler__ handler, IConfig props) throws IOException {
         String webSocketPortProp = props.getProperty(WEB_SOCKET_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
         if (DISABLED_PORT_BIND.equals(webSocketPortProp)) {
             //Do nothing no WebSocket configured
@@ -220,7 +197,7 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         });
     }
     
-    private void initializeSSLTCPTransport(final NettyMQTTHandler handler, IConfig props, final SSLContext sslContext) throws IOException {
+    private void initializeSSLTCPTransport(final NettyMQTTHandler__ handler, IConfig props, final SSLContext sslContext) throws IOException {
         String sslPortProp = props.getProperty(SSL_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
         if (DISABLED_PORT_BIND.equals(sslPortProp)) {
             //Do nothing no SSL configured
@@ -252,7 +229,7 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         });
     }
 
-    private void initializeWSSTransport(final NettyMQTTHandler handler, IConfig props, final SSLContext sslContext) throws IOException {
+    private void initializeWSSTransport(final NettyMQTTHandler__ handler, IConfig props, final SSLContext sslContext) throws IOException {
         String sslPortProp = props.getProperty(WSS_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
         if (DISABLED_PORT_BIND.equals(sslPortProp)) {
             //Do nothing no SSL configured
@@ -325,4 +302,26 @@ public class NettyAcceptor /*implements ServerAcceptor*/ {
         }
         return new SslHandler(sslEngine);
     }
+
+	public void initialize(io.moquette.spi.impl.ProtocolProcessor__ processor, IConfig props,
+			ISslContextCreator sslCtxCreator) throws IOException {
+		 	m_bossGroup = new NioEventLoopGroup(1);
+	        m_workerGroup = new NioEventLoopGroup(2);
+	        final NettyMQTTHandler__ handler = new NettyMQTTHandler__(processor);
+	        
+	        initializePlainTCPTransport(handler, props);
+	        initializeWebSocketTransport(handler, props);
+	        String sslTcpPortProp = props.getProperty(BrokerConstants.SSL_PORT_PROPERTY_NAME);
+	        String wssPortProp = props.getProperty(BrokerConstants.WSS_PORT_PROPERTY_NAME);
+	        if (sslTcpPortProp != null || wssPortProp != null) {
+	            SSLContext sslContext = sslCtxCreator.initSSLContext();
+	            if (sslContext == null) {
+	                LOG.error("Can't initialize SSLHandler layer! Exiting, check your configuration of jks");
+	                return;
+	            }
+	            initializeSSLTCPTransport(handler, props, sslContext);
+	            initializeWSSTransport(handler, props, sslContext);
+	        }
+		
+	}
 }

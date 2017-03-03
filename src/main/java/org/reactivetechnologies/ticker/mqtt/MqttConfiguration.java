@@ -19,8 +19,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Properties;
 
-import org.reactivetechnologies.io.moquette.spi.impl.ProtocolProcessorBootstrapper;
-import org.reactivetechnologies.io.moquette.spi.persistence.MapDBPersistentStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +30,8 @@ import io.moquette.server.config.FileResourceLoader;
 import io.moquette.server.config.IConfig;
 import io.moquette.server.config.MemoryConfig;
 import io.moquette.server.config.ResourceLoaderConfig;
+import io.moquette.spi.impl.ProtocolProcessorBootstrapper__;
+import io.moquette.spi.persistence.HazelcastPersistentStore;
 
 @Configuration
 public class MqttConfiguration {
@@ -64,15 +64,15 @@ public class MqttConfiguration {
 	}
 	
 	@Bean
-	ProtocolProcessorBootstrapper processorBoot()
+	ProtocolProcessorBootstrapper__ processorBoot()
 	{
-		return new ProtocolProcessorBootstrapper();
+		return new ProtocolProcessorBootstrapper__();
 	}
 	
 	@Bean
-	MapDBPersistentStore mapStore() throws FileNotFoundException
+	HazelcastPersistentStore mapStore() throws FileNotFoundException
 	{
-		return new MapDBPersistentStore(config());
+		return new HazelcastPersistentStore(config());
 	}
 	@Value("${mqtt.conf.file:}")
 	private String conf;

@@ -13,23 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package ticker.scheduler;
+package io.moquette.spi.impl;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
-import org.springframework.context.annotation.Bean;
+import io.moquette.parser.proto.messages.PublishMessage;
+import io.netty.channel.Channel;
 
-@SpringBootApplication(exclude = {HazelcastAutoConfiguration.class})
-public class Main {
+interface PublishHandler {
 
-	public static void main(String[] args) {
-		SpringApplication.run(Main.class, args);
-	}
-	@Bean
-	Runner runner()
-	{
-		return new Runner();
-	}
+	void receive(Channel channel, PublishMessage msg);
 
 }

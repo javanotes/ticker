@@ -1,31 +1,29 @@
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
+
+import static io.moquette.spi.impl.ProtocolProcessor__.asStoredMessage;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.moquette.parser.proto.messages.PublishMessage;
 import io.moquette.server.netty.NettyUtils;
 import io.moquette.spi.IMessagesStore;
-import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.impl.subscriptions.SubscriptionsStore;
 import io.moquette.spi.security.IAuthorizator;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
+class Qos0PublishHandler__ implements PublishHandler {
 
-import static io.moquette.spi.impl.ProtocolProcessor.asStoredMessage;
-
-class Qos0PublishHandler implements PublishHandler {
-
-    private static final Logger LOG = LoggerFactory.getLogger(Qos0PublishHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Qos0PublishHandler__.class);
 
     private final IAuthorizator m_authorizator;
     private final SubscriptionsStore subscriptions;
     private final IMessagesStore m_messagesStore;
-    private final BrokerInterceptor m_interceptor;
+    private final BrokerInterceptor__ m_interceptor;
     private final MessagesPublisher publisher;
 
-    public Qos0PublishHandler(IAuthorizator authorizator, SubscriptionsStore subscriptions,
-                              IMessagesStore messagesStore, BrokerInterceptor interceptor,
+    public Qos0PublishHandler__(IAuthorizator authorizator, SubscriptionsStore subscriptions,
+                              IMessagesStore messagesStore, BrokerInterceptor__ interceptor,
                               MessagesPublisher messagesPublisher) {
         this.m_authorizator = authorizator;
         this.subscriptions = subscriptions;
@@ -60,10 +58,10 @@ class Qos0PublishHandler implements PublishHandler {
         //List<Subscription> topicMatchingSubscriptions = subscriptions.matches(topic);
         //this.publisher.publish2Subscribers(toStoreMsg, topicMatchingSubscriptions);
 
-        if (msg.isRetainFlag()) {
+        /*if (msg.isRetainFlag()) {
             //QoS == 0 && retain => clean old retained
             m_messagesStore.cleanRetained(topic);
-        }
+        }*/
 
         String username = NettyUtils.userName(channel);
         m_interceptor.notifyTopicPublished(msg, clientID, username);

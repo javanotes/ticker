@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -22,14 +22,13 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.reactivetechnologies.io.moquette.server.Server;
-import org.reactivetechnologies.io.moquette.spi.persistence.MapDBPersistentStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
+import io.moquette.server.Server__;
 import io.moquette.server.config.IConfig;
 import io.moquette.server.config.IResourceLoader;
 import io.moquette.spi.IMessagesStore;
@@ -41,6 +40,7 @@ import io.moquette.spi.impl.security.PermitAllAuthorizator;
 import io.moquette.spi.impl.security.ResourceAuthenticator;
 import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.impl.subscriptions.SubscriptionsStore;
+import io.moquette.spi.persistence.HazelcastPersistentStore;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
 
@@ -49,22 +49,22 @@ import io.moquette.spi.security.IAuthorizator;
  *
  * @author andrea
  */
-public class ProtocolProcessorBootstrapper {
+public class ProtocolProcessorBootstrapper__ {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessorBootstrapper.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessorBootstrapper__.class);
 
     private SubscriptionsStore subscriptions;
 
     @Autowired
-    private MapDBPersistentStore m_mapStorage;
+    private HazelcastPersistentStore m_mapStorage;
     
     private ISessionsStore m_sessionsStore;
 
-    private BrokerInterceptor m_interceptor;
+    private BrokerInterceptor__ m_interceptor;
 
-    private final ProtocolProcessor m_processor = new ProtocolProcessor();
+    private final ProtocolProcessor__ m_processor = new ProtocolProcessor__();
 
-    public ProtocolProcessorBootstrapper() {
+    public ProtocolProcessorBootstrapper__() {
     }
 
     /**
@@ -80,8 +80,8 @@ public class ProtocolProcessorBootstrapper {
      * @param server the serber to init.
      * @return the processor created for the broker.
      * */
-    public ProtocolProcessor init(IConfig props, List<? extends InterceptHandler> embeddedObservers,
-                                  IAuthenticator authenticator, IAuthorizator authorizator, Server server) {
+    public ProtocolProcessor__ init(IConfig props, List<? extends InterceptHandler> embeddedObservers,
+                                  IAuthenticator authenticator, IAuthorizator authorizator, Server__ server) {
         subscriptions = new SubscriptionsStore();
 
         //m_mapStorage = new MapDBPersistentStore(props);
@@ -96,7 +96,7 @@ public class ProtocolProcessorBootstrapper {
             try {
                 InterceptHandler handler;
                 try {
-                    final Constructor<? extends InterceptHandler> constructor = Class.forName(interceptorClassName).asSubclass(InterceptHandler.class).getConstructor(Server.class);
+                    final Constructor<? extends InterceptHandler> constructor = Class.forName(interceptorClassName).asSubclass(InterceptHandler.class).getConstructor(Server__.class);
                     handler = constructor.newInstance(server);
                 } catch (NoSuchMethodException nsme){
                     handler = Class.forName(interceptorClassName).asSubclass(InterceptHandler.class).newInstance();
@@ -106,11 +106,11 @@ public class ProtocolProcessorBootstrapper {
                 LOG.error("Can't load the intercept handler {}", ex);
             }
         }
-        m_interceptor = new BrokerInterceptor(observers);
+        m_interceptor = new BrokerInterceptor__(observers);
 
         subscriptions.init(m_sessionsStore);
 
-        String configPath = System.getProperty("moquette.path", null);
+        //String configPath = System.getProperty("moquette.path", null);
         String authenticatorClassName = props.getProperty(BrokerConstants.AUTHENTICATOR_CLASS_NAME, "");
 
         if (!authenticatorClassName.isEmpty()) {

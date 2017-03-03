@@ -14,7 +14,7 @@
  * You may elect to redistribute this code under either of these licenses.
  */
 
-package org.reactivetechnologies.io.moquette.spi.persistence;
+package io.moquette.spi.persistence;
 
 import java.io.Serializable;
 import java.util.concurrent.Executors;
@@ -30,7 +30,7 @@ import io.moquette.spi.ISessionsStore;
 /**
  * MapDB main persistence implementation
  */
-public class MapDBPersistentStore {
+public class HazelcastPersistentStore {
 
     /**
      * This is a DTO used to persist minimal status (clean session and activation status) of
@@ -58,10 +58,10 @@ public class MapDBPersistentStore {
 
     protected final ScheduledExecutorService m_scheduler = Executors.newScheduledThreadPool(1);
     
-    private MapDBMessagesStore m_messageStore;
-    private MapDBSessionsStore m_sessionsStore;
+    private HazelcastMessagesStore m_messageStore;
+    private HazelcastSessionsStore m_sessionsStore;
 
-    public MapDBPersistentStore(IConfig props) {
+    public HazelcastPersistentStore(IConfig props) {
         //this.m_storePath = props.getProperty(PERSISTENT_STORE_PROPERTY_NAME, "");
         //this.m_autosaveInterval = Integer.parseInt(props.getProperty(AUTOSAVE_INTERVAL_PROPERTY_NAME, "30"));
     }
@@ -101,10 +101,10 @@ public class MapDBPersistentStore {
         }, this.m_autosaveInterval, this.m_autosaveInterval, TimeUnit.SECONDS);*/
 
         //TODO check m_db is valid and
-        m_messageStore = new MapDBMessagesStore(m_db);
+        m_messageStore = new HazelcastMessagesStore(m_db);
         m_messageStore.initStore();
 
-        m_sessionsStore = new MapDBSessionsStore(m_db, m_messageStore);
+        m_sessionsStore = new HazelcastSessionsStore(m_db, m_messageStore);
         m_sessionsStore.initStore();
     }
 

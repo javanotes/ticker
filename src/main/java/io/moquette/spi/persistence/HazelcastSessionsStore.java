@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.spi.persistence;
+package io.moquette.spi.persistence;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +25,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.reactivetechnologies.io.moquette.spi.persistence.MapDBPersistentStore.PersistentSession;
 import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,15 +37,16 @@ import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.MessageGUID;
 import io.moquette.spi.impl.Utils;
 import io.moquette.spi.impl.subscriptions.Subscription;
+import io.moquette.spi.persistence.HazelcastPersistentStore.PersistentSession;
 
 /**
  * ISessionsStore implementation backed by MapDB.
  *
  * @author andrea
  */
-class MapDBSessionsStore implements ISessionsStore {
+class HazelcastSessionsStore implements ISessionsStore {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapDBSessionsStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HazelcastSessionsStore.class);
 
     //maps clientID->[MessageId -> guid]
     private ConcurrentMap<String, ConcurrentMap<Integer, MessageGUID>> m_inflightStore;
@@ -59,9 +59,9 @@ class MapDBSessionsStore implements ISessionsStore {
     //private final DB m_db;
     private final HazelcastOperations m_db;
     
-    private final MapDBMessagesStore m_messagesStore;
+    private final HazelcastMessagesStore m_messagesStore;
 
-    MapDBSessionsStore(HazelcastOperations db, MapDBMessagesStore messagesStore) {
+    HazelcastSessionsStore(HazelcastOperations db, HazelcastMessagesStore messagesStore) {
         m_db = db;
         m_messagesStore = messagesStore;
     }
@@ -169,7 +169,7 @@ class MapDBSessionsStore implements ISessionsStore {
 
     @Override
     public void updateCleanStatus(String clientID, boolean cleanSession) {
-        m_persistentSessions.set(clientID, new MapDBPersistentStore.PersistentSession(cleanSession));
+        m_persistentSessions.set(clientID, new HazelcastPersistentStore.PersistentSession(cleanSession));
     }
 
     /**

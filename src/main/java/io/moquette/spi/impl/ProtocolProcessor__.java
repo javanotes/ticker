@@ -13,11 +13,10 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
 
 import static io.moquette.parser.netty.Utils.VERSION_3_1;
 import static io.moquette.parser.netty.Utils.VERSION_3_1_1;
-import static org.reactivetechnologies.io.moquette.spi.impl.InternalRepublisher.createPublishForQos;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -74,7 +73,7 @@ import io.netty.handler.timeout.IdleStateHandler;
  *
  * @author andrea
  */
-public class ProtocolProcessor {
+public class ProtocolProcessor__ {
 
     static final class WillMessage {
         private final String topic;
@@ -140,7 +139,7 @@ public class ProtocolProcessor {
         }
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessor.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessor__.class);
 
     protected ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors;
     protected ConcurrentMap<RunningSubscription, SubscriptionState> subscriptionInCourse;
@@ -152,12 +151,12 @@ public class ProtocolProcessor {
     private IMessagesStore m_messagesStore;
     private ISessionsStore m_sessionsStore;
     private IAuthenticator m_authenticator;
-    private BrokerInterceptor m_interceptor;
+    private BrokerInterceptor__ m_interceptor;
     private String m_server_port;
 
-    private Qos0PublishHandler qos0PublishHandler;
-    private Qos1PublishHandler qos1PublishHandler;
-    private Qos2PublishHandler qos2PublishHandler;
+    private Qos0PublishHandler__ qos0PublishHandler;
+    private Qos1PublishHandler__ qos1PublishHandler;
+    private Qos2PublishHandler__ qos2PublishHandler;
     private MessagesPublisher messagesPublisher;
     private InternalRepublisher internalRepublisher;
     
@@ -165,12 +164,12 @@ public class ProtocolProcessor {
     //maps clientID to Will testament, if specified on CONNECT
     private ConcurrentMap<String, WillMessage> m_willStore = new ConcurrentHashMap<>();
 
-    ProtocolProcessor() {}
+    ProtocolProcessor__() {}
 
     public void init(SubscriptionsStore subscriptions, IMessagesStore storageService,
                      ISessionsStore sessionsStore,
                      IAuthenticator authenticator,
-                     boolean allowAnonymous, IAuthorizator authorizator, BrokerInterceptor interceptor) {
+                     boolean allowAnonymous, IAuthorizator authorizator, BrokerInterceptor__ interceptor) {
         init(subscriptions,storageService,sessionsStore,authenticator,allowAnonymous, false, authorizator,interceptor,null);
     }
 
@@ -178,7 +177,7 @@ public class ProtocolProcessor {
                      ISessionsStore sessionsStore,
                      IAuthenticator authenticator,
                      boolean allowAnonymous,
-                     boolean allowZeroByteClientId, IAuthorizator authorizator, BrokerInterceptor interceptor) {
+                     boolean allowZeroByteClientId, IAuthorizator authorizator, BrokerInterceptor__ interceptor) {
         init(subscriptions,storageService,sessionsStore,authenticator,allowAnonymous, allowZeroByteClientId, authorizator,interceptor,null);
     }
 
@@ -198,7 +197,8 @@ public class ProtocolProcessor {
               ISessionsStore sessionsStore,
               IAuthenticator authenticator,
               boolean allowAnonymous,
-              boolean allowZeroByteClientId, IAuthorizator authorizator, BrokerInterceptor interceptor, String serverPort) {
+              boolean allowZeroByteClientId, IAuthorizator authorizator, BrokerInterceptor__ interceptor, String serverPort) 
+    {
         this.connectionDescriptors = new ConcurrentHashMap<>();
         this.subscriptionInCourse = new ConcurrentHashMap<>();
         this.m_interceptor = interceptor;
@@ -215,11 +215,11 @@ public class ProtocolProcessor {
         final PersistentQueueMessageSender messageSender = new PersistentQueueMessageSender(this.connectionDescriptors);
         this.messagesPublisher = new MessagesPublisher(connectionDescriptors, sessionsStore, m_messagesStore, messageSender);
 
-        this.qos0PublishHandler = new Qos0PublishHandler(m_authorizator, subscriptions, m_messagesStore,
+        this.qos0PublishHandler = new Qos0PublishHandler__(m_authorizator, subscriptions, m_messagesStore,
                 m_interceptor, this.messagesPublisher);
-        this.qos1PublishHandler = new Qos1PublishHandler(m_authorizator, subscriptions, m_messagesStore,
+        this.qos1PublishHandler = new Qos1PublishHandler__(m_authorizator, subscriptions, m_messagesStore,
                 m_interceptor, this.connectionDescriptors, m_server_port, this.messagesPublisher);
-        this.qos2PublishHandler = new Qos2PublishHandler(m_authorizator, subscriptions, m_messagesStore,
+        this.qos2PublishHandler = new Qos2PublishHandler__(m_authorizator, subscriptions, m_messagesStore,
                 m_interceptor, this.connectionDescriptors, m_sessionsStore, m_server_port, this.messagesPublisher);
 
         this.internalRepublisher = new InternalRepublisher(messageSender);
@@ -484,6 +484,8 @@ public class ProtocolProcessor {
             case EXACTLY_ONCE:
                 this.qos2PublishHandler.receive(channel, msg);
                 break;
+            default: 
+            	throw new IllegalArgumentException("Invalid QoS for PUBLISH- "+qos.byteValue());
         }
         
     }
@@ -840,6 +842,17 @@ public class ProtocolProcessor {
         }
         return ackMessage;
     }
+    
+    public static SubAckMessage prepareRejectSubscriptionResponse(SubscribeMessage subRequest) {
+        //ack the client
+        SubAckMessage ackMessage = new SubAckMessage();
+        ackMessage.setMessageID(subRequest.getMessageID());
+
+        for (int i = 0; i < subRequest.subscriptions().size(); i++) {
+			ackMessage.addType(AbstractMessage.QOSType.FAILURE);
+		}
+        return ackMessage;
+    }
 
     private void publishRetainedMessagesInSession(final Subscription newSubscription, String username) {
         LOG.debug("Publish persisted messages in session {}", newSubscription);
@@ -872,7 +885,7 @@ public class ProtocolProcessor {
             } else {
                 //recreate a publish from stored publish in queue
                 boolean retained = m_messagesStore.getMessageByGuid(msg.getGuid()) != null;
-                PublishMessage pubMsg = createPublishForQos(msg.getTopic(), msg.getQos(), msg.getMessage(), retained);
+                PublishMessage pubMsg = InternalRepublisher.createPublishForQos(msg.getTopic(), msg.getQos(), msg.getMessage(), retained);
                 channel.write(pubMsg);
             }
         }

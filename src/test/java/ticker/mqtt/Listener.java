@@ -23,8 +23,12 @@ public class Listener extends AbstractQueueListener<MqttData> {
 	}
 
 	@Override
+	public void init() {
+		log.info("Registered listener..");
+	}
+	@Override
 	public void onMessage(MqttData m) throws Exception {
-		//log.info("Recieved message ... " + m.toUtf8());
+		log.info("Recieved message ... " + m.toUtf8());
 		if(latch != null)
 			latch.countDown();
 	}

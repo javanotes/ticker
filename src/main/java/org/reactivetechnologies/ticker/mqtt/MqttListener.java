@@ -22,7 +22,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import org.reactivetechnologies.io.moquette.server.Server;
 import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,12 +30,13 @@ import org.springframework.boot.context.embedded.PortInUseException;
 
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
+import io.moquette.server.Server__;
 import io.moquette.server.config.IConfig;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
 import io.moquette.spi.security.ISslContextCreator;
 
-class MqttListener extends Server {
+class MqttListener extends Server__ {
 
 	private static Logger log = LoggerFactory.getLogger(MqttListener.class);
 	@Autowired

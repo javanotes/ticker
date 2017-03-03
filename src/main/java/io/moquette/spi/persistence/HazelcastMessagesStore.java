@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.spi.persistence;
+package io.moquette.spi.persistence;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,9 +37,9 @@ import io.moquette.spi.MessageGUID;
  *
  * @author andrea
  */
-class MapDBMessagesStore implements IMessagesStore {
+class HazelcastMessagesStore implements IMessagesStore {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MapDBMessagesStore.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HazelcastMessagesStore.class);
 
     //private DB m_db;
     
@@ -51,7 +51,7 @@ class MapDBMessagesStore implements IMessagesStore {
     private IMap<MessageGUID, IMessagesStore.StoredMessage> m_persistentMessageStore;
 
 
-    MapDBMessagesStore(HazelcastOperations db) {
+    HazelcastMessagesStore(HazelcastOperations db) {
         m_db = db;
     }
 
@@ -94,7 +94,7 @@ class MapDBMessagesStore implements IMessagesStore {
         LOG.debug("storePublishForFuture guid <{}>", guid);
         m_persistentMessageStore.set(guid, storedMessage);
         
-        IMap<Integer, MessageGUID> messageIdToGuid = m_db.getMap(MapDBSessionsStore.messageId2GuidsMapName(storedMessage.getClientID()));
+        IMap<Integer, MessageGUID> messageIdToGuid = m_db.getMap(HazelcastSessionsStore.messageId2GuidsMapName(storedMessage.getClientID()));
         messageIdToGuid.set(storedMessage.getMessageID(), guid);
         
         return guid;
@@ -102,7 +102,7 @@ class MapDBMessagesStore implements IMessagesStore {
 
     @Override
     public void dropMessagesInSession(String clientID) {
-        ConcurrentMap<Integer, MessageGUID> messageIdToGuid = m_db.getMap(MapDBSessionsStore.messageId2GuidsMapName(clientID));
+        ConcurrentMap<Integer, MessageGUID> messageIdToGuid = m_db.getMap(HazelcastSessionsStore.messageId2GuidsMapName(clientID));
         for (MessageGUID guid : messageIdToGuid.values()) {
             removeStoredMessage(guid);
         }

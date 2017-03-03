@@ -1,36 +1,34 @@
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
+
+import static io.moquette.spi.impl.ProtocolProcessor__.asStoredMessage;
+
+import java.util.concurrent.ConcurrentMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.moquette.parser.proto.messages.PubAckMessage;
 import io.moquette.parser.proto.messages.PublishMessage;
 import io.moquette.server.ConnectionDescriptor;
 import io.moquette.server.netty.NettyUtils;
 import io.moquette.spi.IMessagesStore;
-import io.moquette.spi.MessageGUID;
-import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.impl.subscriptions.SubscriptionsStore;
 import io.moquette.spi.security.IAuthorizator;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-
-import static io.moquette.spi.impl.ProtocolProcessor.asStoredMessage;
-
-class Qos1PublishHandler implements PublishHandler{
-    private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler.class);
+class Qos1PublishHandler__ implements PublishHandler{
+    private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler__.class);
 
     private final IAuthorizator m_authorizator;
     private final SubscriptionsStore subscriptions;
     private final IMessagesStore m_messagesStore;
-    private final BrokerInterceptor m_interceptor;
+    private final BrokerInterceptor__ m_interceptor;
     private final ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors;
     private final String brokerPort;
     private final MessagesPublisher publisher;
 
-    public Qos1PublishHandler(IAuthorizator authorizator, SubscriptionsStore subscriptions,
-                              IMessagesStore messagesStore, BrokerInterceptor interceptor,
+    public Qos1PublishHandler__(IAuthorizator authorizator, SubscriptionsStore subscriptions,
+                              IMessagesStore messagesStore, BrokerInterceptor__ interceptor,
                               ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors,
                               String brokerPort, MessagesPublisher messagesPublisher) {
         this.m_authorizator = authorizator;
@@ -75,7 +73,7 @@ class Qos1PublishHandler implements PublishHandler{
         }
         LOG.info("server {} replying with PubAck to MSG ID {}", brokerPort, messageID);
 
-        if (msg.isRetainFlag()) {
+        /*if (msg.isRetainFlag()) {
             if (!msg.getPayload().hasRemaining()) {
                 m_messagesStore.cleanRetained(topic);
             } else {
@@ -83,7 +81,7 @@ class Qos1PublishHandler implements PublishHandler{
                 MessageGUID guid = m_messagesStore.storePublishForFuture(toStoreMsg);
                 m_messagesStore.storeRetained(topic, guid);
             }
-        }
+        }*/
 
         //MODLOG: commented
         //String username = NettyUtils.userName(channel);

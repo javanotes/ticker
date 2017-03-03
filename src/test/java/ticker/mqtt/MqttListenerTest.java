@@ -20,8 +20,6 @@ import akka.actor.Inbox;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = {Ticker.class})
 public class MqttListenerTest {
-
-	
 			
 	@Autowired
 	Inbox inbox;

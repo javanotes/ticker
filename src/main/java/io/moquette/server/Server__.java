@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.server;
+package io.moquette.server;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import org.reactivetechnologies.io.moquette.spi.impl.ProtocolProcessor;
-import org.reactivetechnologies.io.moquette.spi.impl.ProtocolProcessorBootstrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +34,9 @@ import io.moquette.server.config.IConfig;
 import io.moquette.server.config.IResourceLoader;
 import io.moquette.server.config.MemoryConfig;
 import io.moquette.server.config.ResourceLoaderConfig;
+import io.moquette.server.netty.NettyAcceptor__;
+import io.moquette.spi.impl.ProtocolProcessorBootstrapper__;
+import io.moquette.spi.impl.ProtocolProcessor__;
 import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
@@ -45,20 +46,20 @@ import io.moquette.spi.security.ISslContextCreator;
  * Launch a  configured version of the server.
  * @author andrea
  */
-public class Server {
+public class Server__ {
     
-    private static final Logger LOG = LoggerFactory.getLogger(Server.class);
-    private NettyAcceptor m_acceptor;
+    private static final Logger LOG = LoggerFactory.getLogger(Server__.class);
+    private NettyAcceptor__ m_acceptor;
 
     private volatile boolean m_initialized;
 
-    private ProtocolProcessor m_processor;
+    private ProtocolProcessor__ m_processor;
 
     @Autowired
-    private ProtocolProcessorBootstrapper m_processorBootstrapper;
+    private ProtocolProcessorBootstrapper__ m_processorBootstrapper;
 
     public static void main(String[] args) throws IOException {
-        final Server server = new Server();
+        final Server__ server = new Server__();
         server.startServer();
         System.out.println("Server started, version 0.9");
         //Bind  a shutdown hook
@@ -151,13 +152,13 @@ public class Server {
         
         //m_processorBootstrapper = new ProtocolProcessorBootstrapper();
         
-        final ProtocolProcessor processor = m_processorBootstrapper.init(config, handlers, authenticator, authorizator, this);
+        final ProtocolProcessor__ processor = m_processorBootstrapper.init(config, handlers, authenticator, authorizator, this);
 
         if (sslCtxCreator == null) {
             sslCtxCreator = new DefaultMoquetteSslContextCreator(config);
         }
 
-        m_acceptor = new NettyAcceptor();
+        m_acceptor = new NettyAcceptor__();
         m_acceptor.initialize(processor, config, sslCtxCreator);
         m_processor = processor;
         m_initialized = true;

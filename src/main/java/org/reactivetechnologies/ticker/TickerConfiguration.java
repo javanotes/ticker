@@ -15,6 +15,7 @@
  */
 package org.reactivetechnologies.ticker;
 
+import org.reactivetechnologies.ticker.datagrid.HazelcastConfiguration;
 import org.reactivetechnologies.ticker.messaging.MessagingConfiguration;
 import org.reactivetechnologies.ticker.mqtt.MqttConfiguration;
 import org.reactivetechnologies.ticker.rest.RestConfiguration;
@@ -25,7 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({SchedulerConfiguration.class, MessagingConfiguration.class, RestConfiguration.class, MqttConfiguration.class})
+@Import({HazelcastConfiguration.class, SchedulerConfiguration.class, MessagingConfiguration.class, RestConfiguration.class, MqttConfiguration.class})
 public class TickerConfiguration {
 	
 	@Bean

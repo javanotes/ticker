@@ -1,40 +1,42 @@
-package org.reactivetechnologies.io.moquette.spi.impl;
+package io.moquette.spi.impl;
 
-import io.moquette.parser.proto.messages.*;
+import static io.moquette.spi.impl.ProtocolProcessor__.asStoredMessage;
+
+import java.util.concurrent.ConcurrentMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.moquette.parser.proto.messages.AbstractMessage;
+import io.moquette.parser.proto.messages.PubCompMessage;
+import io.moquette.parser.proto.messages.PubRecMessage;
+import io.moquette.parser.proto.messages.PubRelMessage;
+import io.moquette.parser.proto.messages.PublishMessage;
 import io.moquette.server.ConnectionDescriptor;
 import io.moquette.server.netty.NettyUtils;
 import io.moquette.spi.ClientSession;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.ISessionsStore;
 import io.moquette.spi.MessageGUID;
-import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.impl.subscriptions.SubscriptionsStore;
 import io.moquette.spi.security.IAuthorizator;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
+class Qos2PublishHandler__ implements PublishHandler{
 
-import static io.moquette.spi.impl.ProtocolProcessor.asStoredMessage;
-
-class Qos2PublishHandler implements PublishHandler{
-
-    private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Qos1PublishHandler__.class);
 
     private final IAuthorizator m_authorizator;
     private final SubscriptionsStore subscriptions;
     private final IMessagesStore m_messagesStore;
-    private final BrokerInterceptor m_interceptor;
+    private final BrokerInterceptor__ m_interceptor;
     private final ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors;
     private final ISessionsStore m_sessionsStore;
     private final String brokerPort;
     private final MessagesPublisher publisher;
 
-    public Qos2PublishHandler(IAuthorizator authorizator, SubscriptionsStore subscriptions,
-                              IMessagesStore messagesStore, BrokerInterceptor interceptor,
+    public Qos2PublishHandler__(IAuthorizator authorizator, SubscriptionsStore subscriptions,
+                              IMessagesStore messagesStore, BrokerInterceptor__ interceptor,
                               ConcurrentMap<String, ConnectionDescriptor> connectionDescriptors,
                               ISessionsStore sessionsStore, String brokerPort, MessagesPublisher messagesPublisher) {
         this.m_authorizator = authorizator;
@@ -80,13 +82,13 @@ class Qos2PublishHandler implements PublishHandler{
         //Next the client will send us a pub rel
         //NB publish to subscribers for QoS 2 happen upon PUBREL from publisher
 
-        if (msg.isRetainFlag()) {
+        /*if (msg.isRetainFlag()) {
             if (!msg.getPayload().hasRemaining()) {
                 m_messagesStore.cleanRetained(topic);
             } else {
                 m_messagesStore.storeRetained(topic, guid);
             }
-        }
+        }*/
         
         //MODLOG: commented
         //String username = NettyUtils.userName(channel);
@@ -114,17 +116,18 @@ class Qos2PublishHandler implements PublishHandler{
             LOG.trace("subscription tree {}", subscriptions.dumpTree());
         }
         this.publisher.publish2Subscribers(evt, topicMatchingSubscriptions);*/
+        
         String username = NettyUtils.userName(channel);
         m_interceptor.notifyTopicPublished(asPublishMessage(evt), clientID, username);
         //ENDMODLOG
 
-        if (evt.isRetained()) {
+        /*if (evt.isRetained()) {
             if (!evt.getMessage().hasRemaining()) {
                 m_messagesStore.cleanRetained(topic);
             } else {
                 m_messagesStore.storeRetained(topic, evt.getGuid());
             }
-        }
+        }*/
 
         sendPubComp(clientID, messageID);
     }

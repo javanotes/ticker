@@ -13,7 +13,7 @@
  *
  * You may elect to redistribute this code under either of these licenses.
  */
-package org.reactivetechnologies.io.moquette.server;
+package io.moquette.server.netty;
 
 import static io.moquette.parser.proto.messages.AbstractMessage.CONNECT;
 import static io.moquette.parser.proto.messages.AbstractMessage.DISCONNECT;
@@ -28,7 +28,6 @@ import static io.moquette.parser.proto.messages.AbstractMessage.UNSUBSCRIBE;
 
 import java.io.IOException;
 
-import org.reactivetechnologies.io.moquette.spi.impl.ProtocolProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,9 +40,11 @@ import io.moquette.parser.proto.messages.PubCompMessage;
 import io.moquette.parser.proto.messages.PubRecMessage;
 import io.moquette.parser.proto.messages.PubRelMessage;
 import io.moquette.parser.proto.messages.PublishMessage;
+import io.moquette.parser.proto.messages.SubAckMessage;
 import io.moquette.parser.proto.messages.SubscribeMessage;
+import io.moquette.parser.proto.messages.UnsubAckMessage;
 import io.moquette.parser.proto.messages.UnsubscribeMessage;
-import io.moquette.server.netty.NettyUtils;
+import io.moquette.spi.impl.ProtocolProcessor__;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -54,12 +55,12 @@ import io.netty.handler.codec.CorruptedFrameException;
  * @author andrea
  */
 @Sharable
-public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
+public class NettyMQTTHandler__ extends ChannelInboundHandlerAdapter {
     
-    private static final Logger LOG = LoggerFactory.getLogger(NettyMQTTHandler.class);
-    private final ProtocolProcessor m_processor;
+    private static final Logger LOG = LoggerFactory.getLogger(NettyMQTTHandler__.class);
+    private final ProtocolProcessor__ m_processor;
 
-    public NettyMQTTHandler(ProtocolProcessor processor) {
+    public NettyMQTTHandler__(ProtocolProcessor__ processor) {
         m_processor = processor;
     }
 
@@ -73,10 +74,17 @@ public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
                     m_processor.processConnect(ctx.channel(), (ConnectMessage) msg);
                     break;
                 case SUBSCRIBE:
-                    m_processor.processSubscribe(ctx.channel(), (SubscribeMessage) msg);
+                	//MODLOG: reject subscription requests
+                    //m_processor.processSubscribe(ctx.channel(), (SubscribeMessage) msg);
+                    SubAckMessage reject = ProtocolProcessor__.prepareRejectSubscriptionResponse((SubscribeMessage) msg);
+                    ctx.channel().writeAndFlush(reject);
                     break;
                 case UNSUBSCRIBE:
-                    m_processor.processUnsubscribe(ctx.channel(), (UnsubscribeMessage) msg);
+                	//MODLOG: there is no real unsubscribe action here
+                    //m_processor.processUnsubscribe(ctx.channel(), (UnsubscribeMessage) msg);
+                	UnsubAckMessage dummy = new UnsubAckMessage();
+                	dummy.setMessageID(((UnsubscribeMessage) msg).getMessageID());
+                	ctx.channel().writeAndFlush(dummy);
                     break;
                 case PUBLISH:
                     m_processor.processPublish(ctx.channel(), (PublishMessage) msg);

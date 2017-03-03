@@ -13,13 +13,14 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.io.moquette.spi.impl;
+package ticker.scheduler;
 
-import io.moquette.parser.proto.messages.PublishMessage;
-import io.netty.channel.Channel;
+import org.reactivetechnologies.ticker.TickerConfiguration;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
-interface PublishHandler {
-
-	void receive(Channel channel, PublishMessage msg);
+@Configuration
+@Import(TickerConfiguration.class)
+public class Config {
 
 }
