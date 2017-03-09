@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.reactivetechnologies.ticker.utils;
+package org.reactivetechnologies.ticker.messaging.data.ext;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -31,9 +31,10 @@ import java.util.UUID;
 //Copied from Apache Cassandra source.
 
 /**
- * The goods are here: www.ietf.org/rfc/rfc4122.txt.
+ * Type 1 UUID (time based) utility methods. <i>Copied from Apache Cassandra source.</i>
+ * @see www.ietf.org/rfc/rfc4122.txt.
  */
-public class TimeUIDGen
+public final class UUID1Support
 {
     // A grand day! millis at 00:00:00.000 15 Oct 1582.
     private static final long START_EPOCH = -12219292800000L;
@@ -54,11 +55,11 @@ public class TimeUIDGen
     private static final long MAX_CLOCK_SEQ_AND_NODE = 0x7f7f7f7f7f7f7f7fL;
 
     // placement of this singleton is important.  It needs to be instantiated *AFTER* the other statics.
-    private static final TimeUIDGen instance = new TimeUIDGen();
+    private static final UUID1Support instance = new UUID1Support();
 
     private long lastNanos;
 
-    private TimeUIDGen()
+    private UUID1Support()
     {
         // make sure someone didn't whack the clockSeqAndNode by changing the order of instantiation.
         if (clockSeqAndNode == 0) throw new RuntimeException("singleton instantiation is misplaced.");

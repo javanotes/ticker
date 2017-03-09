@@ -39,6 +39,11 @@ public class CommonHelper {
 	{
 		javaSerializer = new JavaSerializer(true, false);
 	}
+	/**
+	 * Encode a class name to a repeatable pattern string.
+	 * @param _class
+	 * @return
+	 */
 	public static String encodeClassName(Class<?> _class)
 	{
 		String[] pkgParts =StringUtils.delimitedListToStringArray(ClassUtils.getPackageName(_class), ".");
@@ -51,6 +56,12 @@ public class CommonHelper {
 		sb.append(pkgParts[i].toLowerCase()).append("_").append(_class.getSimpleName().toLowerCase());
 		return sb.toString();
 	}
+	/**
+	 * Clone via java serialization.
+	 * @param orig
+	 * @return
+	 * @throws IOException
+	 */
 	public static Data deepCopy(Data orig) throws IOException
 	{
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();

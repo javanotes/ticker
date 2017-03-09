@@ -148,7 +148,7 @@ public class ActorSystemConfiguration {
 	}
 	public static class ContainerCreator implements Creator<QueueContainerActor>
 	{
-		@Autowired MessagingContainerSupport migrListener;
+		@Autowired MessageContainerSupport migrListener;
 		@Autowired DeadLetterHandler dlHandler;
 		@Autowired
 		HazelcastOperations ops;
@@ -191,11 +191,9 @@ public class ActorSystemConfiguration {
 		return actors().actorOf(Props.create(subCreator()));
 	}
 	
-
 	@Bean
-	MessagingContainerSupport messageContainerSupport()
+	MessageContainerSupport messageContainerSupport()
 	{
-		return new MessagingContainerSupport();
+		return new MessageContainerSupport();
 	}
-	
 }

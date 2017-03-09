@@ -45,9 +45,6 @@ import akka.actor.SupervisorStrategy;
 import akka.actor.SupervisorStrategy.Directive;
 import akka.actor.UntypedActor;
 import akka.japi.Function;
-import akka.routing.BalancingPool;
-//import akka.routing.RoundRobinPool;
-//import akka.routing.SmallestMailboxPool;
 import scala.concurrent.duration.Duration;
 
 /**
@@ -94,7 +91,12 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 		this.checkExclusiveAccess = checkExclusiveAccess;
 		
 		this.queueMap = hazelcast.getMap(listener.routing());
-		workerPool = getContext().actorOf(new BalancingPool(listener.parallelism()).withSupervisorStrategy(strategy)
+		
+		//akka.routing.RoundRobinPool
+		//akka.routing.SmallestMailboxPool;
+		//akka.routing.BalancingPool;
+		//configure the router pool?? 
+		workerPool = getContext().actorOf(new akka.routing.BalancingPool(listener.parallelism()).withSupervisorStrategy(strategy)
 				.props(Props.create(ConsumerWorkerActor.class, listener, this)));
 
 		log.debug("New instance @" + hashCode());

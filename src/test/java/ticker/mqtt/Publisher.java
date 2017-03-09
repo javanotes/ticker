@@ -40,7 +40,7 @@ public class Publisher implements Closeable
 	
 	public static final int MAX_INFLIGHT = 100;
 	public static final int QoS = 1;
-	public static final int NO_OF_ITEMS = 2000;
+	public static final int NO_OF_ITEMS = 100;
     
     private Random rand = new Random();
 

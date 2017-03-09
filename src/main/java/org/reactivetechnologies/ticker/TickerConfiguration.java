@@ -20,7 +20,8 @@ import org.reactivetechnologies.ticker.messaging.MessagingConfiguration;
 import org.reactivetechnologies.ticker.mqtt.MqttConfiguration;
 import org.reactivetechnologies.ticker.rest.RestConfiguration;
 import org.reactivetechnologies.ticker.scheduler.SchedulerConfiguration;
-import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.reactivetechnologies.ticker.utils.ApplicationContextWrapper;
+import org.reactivetechnologies.ticker.utils.JarFileSupport;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -30,8 +31,14 @@ import org.springframework.context.annotation.Import;
 public class TickerConfiguration {
 	
 	@Bean
-	ApplicationContextHelper ctxHelper()
+	ApplicationContextWrapper ctxHelper()
 	{
-		return new ApplicationContextHelper();
+		return new ApplicationContextWrapper();
+	}
+	
+	@Bean
+	JarFileSupport jarSupport()
+	{
+		return new JarFileSupport();
 	}
 }

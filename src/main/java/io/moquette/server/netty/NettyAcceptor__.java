@@ -23,6 +23,7 @@ import static io.moquette.BrokerConstants.WSS_PORT_PROPERTY_NAME;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ThreadFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -305,8 +306,22 @@ public class NettyAcceptor__ /*implements ServerAcceptor*/ {
 
 	public void initialize(io.moquette.spi.impl.ProtocolProcessor__ processor, IConfig props,
 			ISslContextCreator sslCtxCreator) throws IOException {
-		 	m_bossGroup = new NioEventLoopGroup(1);
-	        m_workerGroup = new NioEventLoopGroup(2);
+		 	m_bossGroup = new NioEventLoopGroup(1, new ThreadFactory() {
+				int n=0;
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(r, "ticker-mqtt-accept-"+(n++));
+					return t;
+				}
+			});
+	        m_workerGroup = new NioEventLoopGroup(2, new ThreadFactory() {
+				int n=0;
+				@Override
+				public Thread newThread(Runnable r) {
+					Thread t = new Thread(r, "ticker-mqtt-ioworker-"+(n++));
+					return t;
+				}
+			});
 	        final NettyMQTTHandler__ handler = new NettyMQTTHandler__(processor);
 	        
 	        initializePlainTCPTransport(handler, props);

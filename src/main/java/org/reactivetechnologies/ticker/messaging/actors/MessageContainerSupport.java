@@ -15,6 +15,7 @@
  */
 package org.reactivetechnologies.ticker.messaging.actors;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,17 +26,23 @@ import java.util.concurrent.TimeoutException;
 
 import org.reactivetechnologies.ticker.datagrid.AbstractMigratedPartitionListener;
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.reactivetechnologies.ticker.messaging.base.AbstractQueueListener;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
 import org.reactivetechnologies.ticker.messaging.data.DataWrapper;
 import org.reactivetechnologies.ticker.messaging.dto.__EntryRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RegistrationRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__RunRequest;
 import org.reactivetechnologies.ticker.messaging.dto.__StopRequest;
+import org.reactivetechnologies.ticker.utils.ApplicationContextWrapper;
+import org.reactivetechnologies.ticker.utils.JarFileSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.util.StringUtils;
 
 import com.hazelcast.core.IMap;
 
@@ -48,9 +55,9 @@ import scala.concurrent.duration.FiniteDuration;
  * @author esutdal
  *
  */
-public class MessagingContainerSupport extends AbstractMigratedPartitionListener {
+public class MessageContainerSupport extends AbstractMigratedPartitionListener implements CommandLineRunner{
 
-	private static final Logger log = LoggerFactory.getLogger(MessagingContainerSupport.class);
+	private static final Logger log = LoggerFactory.getLogger(MessageContainerSupport.class);
 	@Autowired
 	private ActorSystem actors;
 	
@@ -122,5 +129,101 @@ public class MessagingContainerSupport extends AbstractMigratedPartitionListener
 		if(!stopped)
 			actors.stop(containerActor);
 	}
+	@SuppressWarnings("unchecked")
+	@Override
+	public void run(String... args) throws Exception {
+		if(StringUtils.hasText(deployDir))
+		{
+			log.info("Checking for deployments at- "+deployDir);
+			deploy();
+		}
+		else
+		{
+			log.warn("No deployment directory specified. Checking for a single matching AbstractQueueListener implementation");
+			Object consumer = ApplicationContextWrapper.getInstance(AbstractQueueListener.class, null);
+									
+			if(consumer != null)
+			{
+				try {
+					registerListener((QueueListener<? extends Data>) consumer);
+				} catch (Exception e) {
+					log.error("Invalid implementation of QueueListener. See nested exception");
+					throw e;
+				}
+			}
+			else
+			{
+				log.warn("*** No consumer found for deployment ***");
+			}
+		}
+	}
+	private Class<?>[] loadClasses() throws ClassNotFoundException, InstantiationException, IllegalAccessException
+	{
+		String[] classes = null;
+		if(className.contains(","))
+		{
+			classes = className.split(",");
+		}
+		else
+		{
+			classes = new String[]{className};
+		}
+		Class<?>[] listeners = new Class<?>[classes.length];
+		for (int i = 0; i < classes.length; i++) {
+			listeners[i] = deployer.classForName(classes[i]);
+		}
+		
+		return listeners;
+			
+	}
+	private void deployLibs() throws IOException
+	{
+		String[] dirs = null;
+		if(deployDir.contains(","))
+		{
+			dirs = deployDir.split(",");
+		}
+		else
+		{
+			dirs = new String[]{deployDir};
+		}
+		for (int i = 0; i < dirs.length; i++) {
+			String dir = dirs[i];
+			deployer.deployLibs(dir);
+		}
+		
+	}
+	@SuppressWarnings("unchecked")
+	private <T extends Data> void deploy() throws Exception
+	{
+		try 
+		{
+			deployLibs();
+			Class<?>[] consumers = loadClasses();
+			for(Class<?> c : consumers)
+				registerListener((QueueListener<T>) ApplicationContextWrapper.newInstance(c));
+			
+			log.info("Deployment complete for consumer");
+		} 
+		catch (IOException e) {
+			log.error("Unable to deploy jar. See nested exception");
+			throw e;
+		} catch (ReflectiveOperationException e) {
+			log.error("Unable to find impl classes in deployment. See nested exception");
+			throw e;
+		}
+		catch (ClassCastException e)
+		{
+			log.error("Invalid implementation of QueueListener. See nested exception");
+			throw e;
+		}
+	}
+	@Autowired
+	private JarFileSupport deployer;
+	
+	@Value("${container.deploy.dir:}")
+	private String deployDir;
+	@Value("${container.deploy.consumer_class:}")
+	private String className;
 	
 }

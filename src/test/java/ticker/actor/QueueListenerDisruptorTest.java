@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
-import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
+import org.reactivetechnologies.ticker.messaging.actors.MessageContainerSupport;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
 import org.reactivetechnologies.ticker.messaging.base.ringbuff.RingBufferedQueueContainer;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
@@ -38,7 +38,7 @@ public class QueueListenerDisruptorTest {
 	Publisher pub;
 	
 	@Autowired
-	MessagingContainerSupport containerSupport;
+	MessageContainerSupport containerSupport;
 	
 	@Before
 	public void pre()

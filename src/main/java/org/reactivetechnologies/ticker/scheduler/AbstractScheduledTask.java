@@ -22,7 +22,11 @@ import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskCo
 import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.util.Assert;
-
+/**
+ * Abstract {@linkplain ScheduledTask} implementation.
+ * @author esutdal
+ *
+ */
 public abstract class AbstractScheduledTask implements ScheduledTask, Runnable{
 
 	private TaskSchedulerService scheduler;

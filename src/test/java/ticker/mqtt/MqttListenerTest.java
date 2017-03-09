@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
-import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
+import org.reactivetechnologies.ticker.messaging.actors.MessageContainerSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class MqttListenerTest {
 	Inbox inbox;
 	
 	@Autowired
-	MessagingContainerSupport containerSupport;
+	MessageContainerSupport containerSupport;
 	
 	static final Logger log = LoggerFactory.getLogger(MqttListenerTest.class);
 	@Test

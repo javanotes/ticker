@@ -54,7 +54,7 @@ class QueueContainerActor extends UntypedActor implements QueueContainer {
 
 	private static final Logger log = LoggerFactory.getLogger(QueueContainerActor.class);
 	
-	MessagingContainerSupport migrationListener;
+	MessageContainerSupport migrationListener;
 	DeadLetterHandler deadLetterHandler;
 	
 	private final HazelcastOperations hazelWrap;

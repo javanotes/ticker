@@ -36,8 +36,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import org.reactivetechnologies.ticker.messaging.Data;
-import org.reactivetechnologies.ticker.messaging.data.ext.DataComparable;
-import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.reactivetechnologies.ticker.utils.ApplicationContextWrapper;
 import org.springframework.util.Assert;
 
 import com.hazelcast.core.IMap;
@@ -127,13 +126,13 @@ public class MapData<K extends DataComparable<?>, V extends DataSerializable> ex
 		if (n > 0) {
 			String keyClass = in.readUTF();
 			String valClass = in.readUTF();
-			Assert.notNull(ApplicationContextHelper.getInstance(keyClass));
-			Assert.notNull(ApplicationContextHelper.getInstance(valClass));
+			Assert.notNull(ApplicationContextWrapper.newInstance(keyClass));
+			Assert.notNull(ApplicationContextWrapper.newInstance(valClass));
 			K k;
 			V v;
 			for (int i = 0; i < n; i++) {
-				k = (K) ApplicationContextHelper.getInstance(keyClass);
-				v = (V) ApplicationContextHelper.getInstance(valClass);
+				k = (K) ApplicationContextWrapper.newInstance(keyClass);
+				v = (V) ApplicationContextWrapper.newInstance(valClass);
 				
 				k.readData(in);
 				v.readData(in);

@@ -12,7 +12,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.reactivetechnologies.ticker.Ticker;
-import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
+import org.reactivetechnologies.ticker.messaging.actors.MessageContainerSupport;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
 import org.reactivetechnologies.ticker.messaging.data.TextData;
 import org.slf4j.Logger;
@@ -89,7 +89,7 @@ public class QueueListenerActorTest {
 	Inbox inbox;
 	
 	@Autowired
-	MessagingContainerSupport containerSupport;
+	MessageContainerSupport containerSupport;
 	
 	static final Logger log = LoggerFactory.getLogger(QueueListenerActorTest.class);
 	@Test

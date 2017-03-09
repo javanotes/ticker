@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package org.reactivetechnologies.ticker.messaging.data.ext;
+package org.reactivetechnologies.ticker.messaging.data;
 
 import com.hazelcast.nio.serialization.DataSerializable;
 /**

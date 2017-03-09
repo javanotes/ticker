@@ -33,14 +33,19 @@ public class MyScheduledTask extends DistributedScheduledTask {
 
 	private String cronExpr;
 	@Override
-	public void run(TaskContext context) {
+	public void run(TaskContext context) 
+	{
+		//schedule a post effective child task
 		context.spawnChildTask(true);
+		
 		String valu = UUID.randomUUID().toString();
-		if (!context.containsKeyTransient(someKey)) {
+		if (!context.containsKeyTransient(someKey)) 
+		{
 			context.setTransient(someKey, valu);
 			System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - Have set transient: " + valu);
 		}
-		if (!context.containsKey(someKey)) {
+		if (!context.containsKey(someKey)) 
+		{
 			Data d = new TextData(valu);
 			context.put(someKey, d);
 			System.err.println(new Date()+", ["+Thread.currentThread().getName()+"] - Have set data: " + d);

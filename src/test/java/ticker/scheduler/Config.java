@@ -23,4 +23,5 @@ import org.springframework.context.annotation.Import;
 @Import(TickerConfiguration.class)
 public class Config {
 
+	
 }

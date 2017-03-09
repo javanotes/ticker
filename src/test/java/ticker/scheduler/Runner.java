@@ -20,8 +20,7 @@ import java.util.Date;
 import org.reactivetechnologies.ticker.scheduler.TaskScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-@Component
+
 public class Runner implements CommandLineRunner {
 
 	@Autowired

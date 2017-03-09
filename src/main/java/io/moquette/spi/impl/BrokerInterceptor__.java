@@ -43,7 +43,7 @@ final class BrokerInterceptor__ implements Interceptor {
 			int n=0;
 			@Override
 			public Thread newThread(Runnable r) {
-				Thread t = new Thread(r, "Mqtt.Broker.Cached.Thread-"+(n++));
+				Thread t = new Thread(r, "ticker-mqtt-cached-"+(n++));
 				return t;
 			}
 		});

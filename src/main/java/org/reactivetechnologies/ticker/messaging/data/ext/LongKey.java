@@ -17,6 +17,8 @@ package org.reactivetechnologies.ticker.messaging.data.ext;
 
 import java.io.IOException;
 
+import org.reactivetechnologies.ticker.messaging.data.DataComparable;
+
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 

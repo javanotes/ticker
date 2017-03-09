@@ -19,20 +19,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.StringUtils;
 
-public class JarClassLoader extends URLClassLoader {
+class JarClassLoader extends URLClassLoader {
 
 	private static final Logger log = LoggerFactory.getLogger(JarClassLoader.class);
 	public static final String JAR_URL_PREFIX = "jar:file:/";
@@ -73,44 +68,6 @@ public class JarClassLoader extends URLClassLoader {
 	}
 
 	/**
-	 * Utility method to scan for the package declarations under a given jar file. If convention is followed, the first
-	 * element of the returned set will be the base package
-	 * @param path
-	 * @return
-	 * @throws IOException
-	 */
-	public static Set<String> scanForPackages(String path) throws IOException {
-		try (JarFile file = new JarFile(path)) {
-			TreeSet<String> packages = new TreeSet<>(new Comparator<String>() {
-
-				@Override
-				public int compare(String o1, String o2) {
-					if (o2.length() > o1.length() && o2.contains(o1))
-						return -1;
-					else if (o2.length() < o1.length() && o1.contains(o2))
-						return 1;
-					else
-						return o1.compareTo(o2);
-				}
-			});
-			for (Enumeration<JarEntry> entries = file.entries(); entries.hasMoreElements();) 
-			{
-				JarEntry entry = entries.nextElement();
-				String name = entry.getName();
-
-				if (name.endsWith(".class")) {
-					String fqcn = ClassUtils.convertResourcePathToClassName(name);
-					fqcn = StringUtils.delete(fqcn, ".class");
-					packages.add(ClassUtils.getPackageName(fqcn));
-				}
-			}
-
-			return packages;
-		}
-	}
-
-	
-	/**
 	 * Adds a jar file to the class path. 
 	 * 
 	 * @param path
@@ -132,7 +89,7 @@ public class JarClassLoader extends URLClassLoader {
 	public void addJar(File file) throws IOException {
 		Assert.isTrue(isValidJar(file), "Not a jar file!");
 		addJar(file.getAbsolutePath());
-		log.info("# Added jar to classpath -> "+file.getName());
+		log.info("Added jar to classpath -> "+file.getName());
 	}
 	/**
 	 * 
@@ -154,7 +111,7 @@ public class JarClassLoader extends URLClassLoader {
 		return true;
 	}
 	/**
-	 * Add JAR files found in the given directory to this class loader.
+	 * Add JAR files recursively, found in the given directory to this class loader.
 	 * 
 	 * @param root
 	 *            The directory to recursively search for JAR files.

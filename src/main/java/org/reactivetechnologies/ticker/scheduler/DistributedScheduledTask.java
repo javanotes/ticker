@@ -31,7 +31,7 @@ import org.reactivetechnologies.ticker.datagrid.HazelcastOperations;
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
 import org.reactivetechnologies.ticker.messaging.base.QueueListener;
-import org.reactivetechnologies.ticker.utils.ApplicationContextHelper;
+import org.reactivetechnologies.ticker.utils.ApplicationContextWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.support.CronSequenceGenerator;
@@ -152,6 +152,11 @@ public abstract class DistributedScheduledTask extends AbstractScheduledTask {
 		{
 			return transientMap.containsKey(key);
 		}
+		/**
+		 * GET from local map.
+		 * @param key
+		 * @return
+		 */
 		public Object getTransient(Object key)
 		{
 			return transientMap.get(key);
@@ -258,18 +263,18 @@ public abstract class DistributedScheduledTask extends AbstractScheduledTask {
 			SpawnedScheduledTask subTask = null;
 			log.info("Creating new sub task instance..");
 			if (spawnedTask instanceof Class) {
-				subTask = (SpawnedScheduledTask) ApplicationContextHelper
-						.scanForClassInstance((Class<? extends SpawnedScheduledTask>) spawnedTask, "");
+				subTask = (SpawnedScheduledTask) ApplicationContextWrapper
+						.getInstance((Class<? extends SpawnedScheduledTask>) spawnedTask, "");
 
 				if (subTask == null)
-					subTask = (SpawnedScheduledTask) ApplicationContextHelper
-							.getInstance((Class<? extends SpawnedScheduledTask>) spawnedTask);
+					subTask = (SpawnedScheduledTask) ApplicationContextWrapper
+							.newInstance((Class<? extends SpawnedScheduledTask>) spawnedTask);
 			} else if (spawnedTask instanceof String) {
-				subTask = (SpawnedScheduledTask) ApplicationContextHelper.scanFromContext(spawnedTask.toString());
+				subTask = (SpawnedScheduledTask) ApplicationContextWrapper.getInstance(spawnedTask.toString());
 
 				if (subTask == null)
-					subTask = (SpawnedScheduledTask) ApplicationContextHelper
-							.scanForClassInstance(spawnedTask.toString());
+					subTask = (SpawnedScheduledTask) ApplicationContextWrapper
+							.newInstance(spawnedTask.toString());
 			}
 			if (subTask != null) {
 				subTask.setScheduler(DistributedScheduledTask.this.getScheduler());
@@ -386,7 +391,7 @@ public abstract class DistributedScheduledTask extends AbstractScheduledTask {
 	 * The lowest denomination of {@linkplain TimeUnit} till which uniqueness of job execution is guaranteed.
 	 * Can be HOUR or MINUTE or SECOND. Should be implemented by subclasses. <p><b>Note:</b> Specifying a correct unit is crucial
 	 * since a timestamp pattern based on this unit will be used to acquire a unique scheduler run, without using
-	 * any distributed clock synchronizing technique.
+	 * any distributed clock synchronization technique.
 	 * @return
 	 */
 	protected abstract TimeUnit scheduleTimeunit();

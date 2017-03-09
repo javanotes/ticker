@@ -32,25 +32,16 @@ public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 	private static final Logger log = LoggerFactory.getLogger(SpawnedScheduledTask.class);
 	private volatile TaskContext passedContext;
 	/**
-	 * This time represents the actual execution time of the schedule, after loading has been done.
-	 * So the prepare phase will run at {@link #cronExpression()} intervals, and the actual executions
-	 * will run at + delta.
+	 * Represents the execution time of the schedule, after the execution of the parent {@linkplain DistributedScheduledTask} .
+	 * So the execution phase will run at ({@link DistributedScheduledTask#cronExpression() parent_schedule}  + executeAfter()) intervals.
 	 * @return
+	 * @see SpawnedScheduledTask#cronExpression()
 	 */
 	public abstract Clock executeAfter();
+		
 	/**
-	 * This method is overridden so that a single spawned child task keeps recurring, once started 
-	 * by the parent task. Do not modify this, else there can be chances of multiple child schedule runs.
-	 * @see DistributedScheduledTask#spawnTask(TaskContext)
-	 *//*
-	protected final SpawnedScheduledTask spawnTask(TaskContext context)
-	{
-		return null;
-	}*/
-	
-	/**
-	 * By default the cron expression is ignored and {@link #executeAfter()} is looked up instead.
-	 * However, if this method is implemented with a valid CRON expression, it will override.
+	 * By default the {@link #executeAfter()} is looked up in case of {@linkplain SpawnedScheduledTask} instances.
+	 * However, if this method is implemented with a valid CRON expression, it will override {@linkplain #executeAfter()}.
 	 */
 	@Override
 	public String cronExpression()
@@ -70,16 +61,11 @@ public abstract class SpawnedScheduledTask extends AbstractScheduledTask {
 	}
 	
 	/**
-	 * Used internally for passing TaskContext
+	 * Used internally for passing {@linkplain TaskContext} from the parent {@linkplain DistributedScheduledTask}.
 	 * @param passedContext
 	 */
 	final void setPassedContext(TaskContext passedContext) {
 		this.passedContext = passedContext;
 	}
-	@Override
-	public boolean cancel() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
+		
 }

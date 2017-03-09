@@ -43,6 +43,10 @@ class RestListener extends RestExpress {
 
 	@Value("${rest.server.port-offset:100}")
 	private int portOffset;
+	@Value("${rest.server.ioThreads:2}")
+	private int ioThreads;
+	@Value("${rest.server.execThreads:8}")
+	private int execThreads;
 
 	@Autowired
 	private AddHandler addService;
@@ -53,7 +57,10 @@ class RestListener extends RestExpress {
 	
 	private static void printRoute(Route r)
 	{
-		log.debug(r.getMethod()+" ["+r.getPattern()+"] mapped to action "+r.getAction().getDeclaringClass()+"::"+r.getAction().getName());
+		if (log.isDebugEnabled()) {
+			log.debug(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + r.getAction().getDeclaringClass()
+					+ "::" + r.getAction().getName());
+		}
 	}
 	private static void printRoutes(List<Route> r)
 	{
@@ -72,6 +79,9 @@ class RestListener extends RestExpress {
 	}
 	public void startServer()
 	{
+		setIoThreadCount(ioThreads);
+		setExecutorThreadCount(execThreads);
+		
 		List<Route> routes = uri(getBaseUrl()+URL_ADD, addService).build();
 		printRoutes(routes);
 		routes = uri(getBaseUrl()+URL_INGEST, ingestService).build();

@@ -16,7 +16,7 @@
 package ticker.mqtt;
 
 import org.reactivetechnologies.ticker.TickerConfiguration;
-import org.reactivetechnologies.ticker.messaging.actors.MessagingContainerSupport;
+import org.reactivetechnologies.ticker.messaging.actors.MessageContainerSupport;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
@@ -28,7 +28,7 @@ public class Main {
 	public static void main(String[] args) {
 		ApplicationContext ctx = SpringApplication.run(Main.class, args);
 		
-		MessagingContainerSupport container = ctx.getBean(MessagingContainerSupport.class);
+		MessageContainerSupport container = ctx.getBean(MessageContainerSupport.class);
 		container.registerListener(new Listener());
 		container.start();
 		
