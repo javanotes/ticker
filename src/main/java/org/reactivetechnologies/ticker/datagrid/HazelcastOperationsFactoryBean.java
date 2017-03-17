@@ -16,6 +16,10 @@
 package org.reactivetechnologies.ticker.datagrid;
 
 import java.io.Serializable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -148,6 +152,37 @@ public class HazelcastOperationsFactoryBean implements FactoryBean<HazelcastOper
 		@Override
 		public <E> IQueue<E> getQueue(String queue) {
 			return getWrapper().hazelcast.getQueue(queue);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <V, K> List<Entry<K, V>> getLocalEntries(String map) {
+			Set<K> keys = (Set<K>) getMap(map).localKeySet();
+			List<Entry<K, V>> entries = new LinkedList<>();
+			for(K key : keys)
+			{
+				V val = (V) get(key, map);
+				entries.add(new Entry<K, V>() {
+
+					@Override
+					public K getKey() {
+						return key;
+					}
+
+					@Override
+					public V getValue() {
+						return val;
+					}
+
+					@Override
+					public V setValue(V arg0) {
+						//immutable
+						return val;
+					}
+				});
+				
+			}
+			return entries;
 		}
 	}
 

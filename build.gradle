@@ -41,7 +41,10 @@ dependencies {
 	compile ('io.moquette:moquette-broker:0.9')
 	
     compile('com.hazelcast:hazelcast:3.7.5')
-    
+    //compile ('org.apache.spark:spark-core_2.11:2.1.0')
+    //testCompile group: 'org.apache.spark', name: 'spark-mllib_2.11', version: '2.1.0'
+    //testCompile group: 'org.apache.mahout', name: 'mahout-core', version: '0.9'
+   
     testCompile group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.1.0'
     testCompile("org.springframework.boot:spring-boot-starter-test")
     testCompile("org.springframework.boot:spring-boot-starter-web"){

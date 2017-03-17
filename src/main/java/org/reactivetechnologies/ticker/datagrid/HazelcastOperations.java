@@ -16,6 +16,8 @@
 package org.reactivetechnologies.ticker.datagrid;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map.Entry;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IAtomicLong;
@@ -62,7 +64,7 @@ public interface HazelcastOperations {
 	Object put(Object key, Object value, String map);
 
 	/**
-	   * 
+	   * IMap set operation
 	   * @param key
 	   * @param value
 	   * @param map
@@ -77,7 +79,14 @@ public interface HazelcastOperations {
 	   */
 	Object get(Object key, String map);
 
-	
+	/**
+	 * Return an immutable collection of local entries.
+	 * @param <V>
+	 * @param <K>
+	 * @param map
+	 * @return
+	 */
+	<V, K> List<Entry<K, V>> getLocalEntries(String map);
 	
 	/**
 	 * Register a local add/update entry listener on a given {@linkplain IMap} by name. Only a single listener for a given {@linkplain MapListener} instance would be 

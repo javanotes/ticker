@@ -16,7 +16,6 @@
 package org.reactivetechnologies.ticker.utils;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 	{
 		Assert.notNull(classType);
 		Object consumer = null;
-		log.info("Scanning classpath for an instance of " + classType+ (beanName != null ? ", with identifier '"+beanName+"'" : ""));
+		log.debug("Scanning classpath for an instance of " + classType+ (beanName != null ? ", with identifier '"+beanName+"'" : ""));
 		consumer = getInstance(classType);
 		if (consumer == null)
 		{
@@ -72,6 +71,10 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 		
 	}
 		
+	private static <T> boolean isAssignableTo(Class<T> classTypeTo, String someClassFqcn)
+	{
+		return ClassUtils.isAssignable(classTypeTo, classForName(someClassFqcn));
+	}
 	private static <T> Object performFullScan(Class<T> classType) 
 	{
 		log.debug("Performing a full classpath scan to find a first matching class. This the final fallback..");
@@ -80,24 +83,19 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 		try {
 			Resource[] resources = resourceResolver.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX+DEFAULT_RESOURCE_PATTERN);
 			MetadataReader reader;
-			String[] ifaces;
 			for(Resource res : resources)
 			{
 				reader = metadataReaderFactory.getMetadataReader(res);
-				ifaces = reader.getClassMetadata().getInterfaceNames();
+				reader.getClassMetadata().getClassName();
 				
-				if(ifaces.length > 0)
+				if(isAssignableTo(classType, reader.getClassMetadata().getClassName()))
 				{
-					Arrays.sort(ifaces);
-					if(Arrays.binarySearch(ifaces, classType.getName()) != -1)
-					{
-						try {
-							return newInstance(reader);
-						} catch (Throwable e) {
-							log.warn("Unable to instantiate consumer found in full classpath scan => "+ e.getMessage());
-							log.debug("", e);
-							return null;
-						}
+					try {
+						return newInstance(reader);
+					} catch (Throwable e) {
+						log.warn("Unable to instantiate consumer found in full classpath scan => "+ e.getMessage());
+						log.debug("", e);
+						return null;
 					}
 				}
 			}
