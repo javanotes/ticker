@@ -22,18 +22,24 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 
 import org.reactivetechnologies.ticker.messaging.Data;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
+import com.hazelcast.internal.serialization.InternalSerializationService;
 import com.hazelcast.internal.serialization.impl.JavaDefaultSerializers.JavaSerializer;
 import com.hazelcast.internal.serialization.impl.ObjectDataInputStream;
 import com.hazelcast.internal.serialization.impl.ObjectDataOutputStream;
 import com.hazelcast.nio.ObjectDataOutput;
-
+import com.hazelcast.nio.serialization.DataSerializable;
+@Component
 public class CommonHelper {
-	private CommonHelper() {
+	public CommonHelper() {
 	}
 
+	@Autowired
+	InternalSerializationService serializeService;
 	private static JavaSerializer javaSerializer;
 	static
 	{
@@ -61,11 +67,12 @@ public class CommonHelper {
 	 * @param orig
 	 * @return
 	 * @throws IOException
+	 * 
 	 */
-	public static Data deepCopy(Data orig) throws IOException
+	public Data deepCopy(Data orig) throws IOException
 	{
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		ObjectDataOutput out = new ObjectDataOutputStream(new ByteArrayOutputStream(), null);
+		ObjectDataOutput out = new ObjectDataOutputStream(new ByteArrayOutputStream(), serializeService);
 		try 
 		{
 			javaSerializer.write(out, orig);
@@ -74,6 +81,31 @@ public class CommonHelper {
 		} catch (IOException e) {
 			throw e;
 		}
+	}
+	/**
+	 * Serialize to byte[].
+	 * @param d
+	 * @return
+	 * @throws IOException
+	 */
+	public byte[] marshall(DataSerializable d) throws IOException
+	{
+		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+		ObjectDataOutput out = new ObjectDataOutputStream(bytes, serializeService);
+		d.writeData(out);
+		return bytes.toByteArray();
+	}
+	/**
+	 * Populate from byte[].
+	 * @param b
+	 * @param ser
+	 * @throws IOException
+	 */
+	public void unmarshall(byte[] b, DataSerializable ser) throws IOException
+	{
+		ObjectDataInputStream in = new ObjectDataInputStream(new ByteArrayInputStream(b), serializeService);
+		ser.readData(in);
+		
 	}
 	
 	private static boolean isPortAvailable(String host, int port)

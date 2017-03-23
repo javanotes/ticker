@@ -36,15 +36,16 @@ import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.util.Assert;
 
+import com.hazelcast.core.ILock;
 import com.hazelcast.core.IMap;
 /**
  * The core service class for scheduling tasks.
  * @author esutdal
  *
  */
-class TaskSchedulerService implements TaskScheduler {
+class TaskSchedulerImpl implements TaskScheduler {
 
-	private static final Logger log = LoggerFactory.getLogger(TaskSchedulerService.class);
+	private static final Logger log = LoggerFactory.getLogger(TaskSchedulerImpl.class);
 	private final ConcurrentMap<String, AbstractScheduledTask> registry = new ConcurrentHashMap<>();
 	
 	@Autowired
@@ -91,14 +92,16 @@ class TaskSchedulerService implements TaskScheduler {
 		//if offset is -ve, implies this clock is lagging behind the cluster clock.
 		boolean intrr = false;
 		clockOffset = (System.currentTimeMillis() - clusterClock.getTimestamp());
-		while(clockOffset < 0)
+		//Assert.isTrue(clockOffset >= 0, "This instance is lagging behind cluster clock");
+		if(clockOffset < 0)
 		{
+			clockOffset = Math.abs(clockOffset);
 			try {
-				Thread.sleep(Math.abs(clockOffset));
+				Thread.sleep(clockOffset);
 			} catch (InterruptedException e) {
 				intrr = true;
 			}
-			clockOffset = (System.currentTimeMillis() - clusterClock.getTimestamp());
+			clockOffset += (System.currentTimeMillis() - clusterClock.getTimestamp());
 		}
 		if(intrr)
 			Thread.currentThread().interrupt();
@@ -112,9 +115,18 @@ class TaskSchedulerService implements TaskScheduler {
 	 * Get a cluster synchronized timestamp.
 	 * @return
 	 */
+	@Override
 	public Clock getClusterClock() {
 		Assert.notNull(clusterClock);
-		return new Clock(System.currentTimeMillis()-clockOffset, clusterClock.getUnit(), clusterClock.getZone());
+		ILock l = getHazelcastOps().getClusterLock("CLOCK");
+		l.lock();
+		try 
+		{
+			return new Clock(System.currentTimeMillis() - clockOffset, clusterClock.getUnit(),
+					clusterClock.getZone());
+		} finally {
+			l.unlock();
+		}
 	}
 
 	private Clock clusterClock;

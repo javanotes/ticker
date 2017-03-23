@@ -33,10 +33,22 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.hazelcast.internal.serialization.InternalSerializationService;
+import com.hazelcast.internal.serialization.impl.DefaultSerializationServiceBuilder;
+
 @EnableConfigurationProperties(HazelcastProperties.class)
 @Configuration
 public class HazelcastConfiguration {
     
+	@Bean
+	InternalSerializationService hazelcastSerializer(HazelcastInstanceWrapper hazelcastInstance)
+	{
+		return new DefaultSerializationServiceBuilder().setAllowUnsafe(true)
+		.setEnableCompression(true)
+		.setUseNativeByteOrder(true)
+		.setHazelcastInstance(hazelcastInstance.hazelcast)
+		.build();
+	}
 	@Bean
 	HazelcastInstanceWrapper hzWrapper(HazelcastProperties hazelcastProperties)
 	{

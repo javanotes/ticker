@@ -33,9 +33,9 @@ import com.hazelcast.nio.serialization.DataSerializable;
  *
  * @param <V>
  */
-public class UUID1MapData<V extends DataSerializable> implements DataSerializable, Map<UUID, V> {
+public class TimeUIDMapData<V extends DataSerializable> implements DataSerializable, Map<UUID, V> {
 
-	private MapData<UUID1Key, V> map = new MapData<>();
+	private MapData<TimeUIDKey, V> map = new MapData<>();
 	@Override
 	public void writeData(ObjectDataOutput out) throws IOException {
 		map.writeData(out);
@@ -54,7 +54,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 
 	@Override
 	public boolean containsKey(Object key) {
-		return map.containsKey(new LongKey((long) key));
+		return map.containsKey(new TimeUIDKey((UUID) key));
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 	@Override
 	public Set<java.util.Map.Entry<UUID, V>> entrySet() {
 		Set<java.util.Map.Entry<UUID, V>> entries = new HashSet<>();
-		for(Entry<UUID1Key, V> entry : map.entrySet())
+		for(Entry<TimeUIDKey, V> entry : map.entrySet())
 		{
 			entries.add(new MapDataEntry<UUID, V>(entry.getKey().value(), entry.getValue()));
 		}
@@ -74,7 +74,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 
 	@Override
 	public V get(Object key) {
-		return map.get(new StringKey((String) key));
+		return map.get(new TimeUIDKey((UUID) key));
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 	@Override
 	public Set<UUID> keySet() {
 		Set<UUID> set = new HashSet<>();
-		for(UUID1Key s : map.keySet())
+		for(TimeUIDKey s : map.keySet())
 		{
 			set.add(s.value());
 		}
@@ -94,7 +94,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 
 	@Override
 	public V put(UUID arg0, V arg1) {
-		return map.put(new UUID1Key(arg0), arg1);
+		return map.put(new TimeUIDKey(arg0), arg1);
 	}
 
 	@Override
@@ -107,7 +107,7 @@ public class UUID1MapData<V extends DataSerializable> implements DataSerializabl
 
 	@Override
 	public V remove(Object arg0) {
-		return map.remove(new StringKey((String) arg0));
+		return map.remove(new TimeUIDKey((UUID) arg0));
 	}
 
 	@Override

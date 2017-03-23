@@ -29,9 +29,9 @@ import org.springframework.util.Assert;
  */
 public abstract class AbstractScheduledTask implements ScheduledTask, Runnable{
 
-	private TaskSchedulerService scheduler;
+	private TaskSchedulerImpl scheduler;
 	private DelegatingCronTrigger trigger;
-	TaskSchedulerService getScheduler() {
+	TaskSchedulerImpl getScheduler() {
 		return scheduler;
 	}
 	DelegatingCronTrigger getTrigger() {
@@ -53,7 +53,7 @@ public abstract class AbstractScheduledTask implements ScheduledTask, Runnable{
 	 * Set the {@linkplain TaskScheduler} instance to this task.
 	 * @param scheduler
 	 */
-	void setScheduler(TaskSchedulerService scheduler) {
+	void setScheduler(TaskSchedulerImpl scheduler) {
 		this.scheduler = scheduler;
 	}
 

@@ -16,7 +16,11 @@
 package org.reactivetechnologies.ticker.scheduler;
 
 import org.reactivetechnologies.ticker.scheduler.DistributedScheduledTask.TaskContext;
-
+/**
+ * 
+ * @author esutdal
+ *
+ */
 public interface TaskScheduler {
 
 	/**
@@ -28,13 +32,6 @@ public interface TaskScheduler {
 	TaskContext scheduleTask(DistributedScheduledTask task);
 
 	/**
-	 * Schedule a one shot task execution at some given time in future.
-	 * @param task
-	 * @return
-	 */
-	//TaskContext scheduleSingleTask(AbstractScheduledTask task);
-
-	/**
 	 * Cancel a given task by {@linkplain TaskContext#getKeyParam()}
 	 * @param taskId
 	 * @param cancelSpawnedTasks
@@ -43,5 +40,10 @@ public interface TaskScheduler {
 	boolean cancelTask(TaskContext taskId, boolean cancelSpawnedTasks);
 
 	void destroy();
+	/**
+	 * Get a cluster synchronized timestamp.
+	 * @return
+	 */
+	Clock getClusterClock();
 
 }

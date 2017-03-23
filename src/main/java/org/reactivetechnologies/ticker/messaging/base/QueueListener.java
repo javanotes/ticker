@@ -11,6 +11,9 @@ import org.reactivetechnologies.ticker.messaging.Data;
  */
 public interface QueueListener<T extends Data> extends Consumer<T> {
 
+	/**
+	 * Name of the default classification queue on which regression listener will listen.
+	 */
 	String DEFAULT_CLASSIFICATION_QUEUE = "classifier/default";
 	/**
 	 * The type of {@linkplain Data} this listener is receiving.

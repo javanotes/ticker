@@ -61,11 +61,6 @@ public class LongKey implements DataComparable<Long> {
 	private long value;
 
 	@Override
-	public int compareTo(Long o) {
-		return Long.compare(value, o);
-	}
-
-	@Override
 	public void writeData(ObjectDataOutput out) throws IOException {
 		out.writeLong(value);
 	}
@@ -78,6 +73,11 @@ public class LongKey implements DataComparable<Long> {
 	@Override
 	public Long value() {
 		return value;
+	}
+
+	@Override
+	public int compareTo(DataComparable<Long> o) {
+		return Long.compare(value, o.value());
 	}
 
 }

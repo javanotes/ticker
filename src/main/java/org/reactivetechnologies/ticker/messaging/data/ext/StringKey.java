@@ -76,13 +76,14 @@ public class StringKey implements DataComparable<String> {
 	public String value() {
 		return value;
 	}
+	
 	@Override
-	public int compareTo(String o) {
+	public int compareTo(DataComparable<String> o) {
 		if(this.value == null && o != null)
 			return 1;
 		if(o == null)
 			return -1;
-		return this.value.compareTo(o);
+		return this.value.compareTo(o.value());
 	}
 
 }

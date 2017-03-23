@@ -40,7 +40,7 @@ public class SchedulerConfiguration {
 	@DependsOn("scheduler")
 	public TaskScheduler schedulerFacade()
 	{
-		return new TaskSchedulerService();
+		return new TaskSchedulerImpl();
 	}
 	@Bean
 	ThreadPoolTaskScheduler scheduler()

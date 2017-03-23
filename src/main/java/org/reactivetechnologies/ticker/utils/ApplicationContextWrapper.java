@@ -16,6 +16,8 @@
 package org.reactivetechnologies.ticker.utils;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +75,40 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 		
 	private static <T> boolean isAssignableTo(Class<T> classTypeTo, String someClassFqcn)
 	{
-		return ClassUtils.isAssignable(classTypeTo, classForName(someClassFqcn));
+		try {
+			return StringUtils.hasText(someClassFqcn) && ClassUtils.isAssignable(classTypeTo, classForName(someClassFqcn));
+		} catch (Throwable e) {
+			//e.printStackTrace();
+		}
+		return false;
+	}
+	/**
+	 * Find all matching subclass for the given class type.
+	 * @deprecated Unoptimized.
+	 * @param classType
+	 * @return
+	 */
+	public static <T> List<String> findMatchingImplementations(Class<T> classType)
+	{
+		PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+		MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(resourceResolver);
+		List<String> matches = new LinkedList<>();
+		try 
+		{
+			Resource[] resources = resourceResolver.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX+DEFAULT_RESOURCE_PATTERN);
+			MetadataReader reader;
+			for(Resource res : resources)
+			{
+				reader = metadataReaderFactory.getMetadataReader(res);
+				if(isAssignableTo(classType, reader.getClassMetadata().getClassName()))
+				{
+					matches.add(reader.getClassMetadata().getClassName());
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return matches;
 	}
 	private static <T> Object performFullScan(Class<T> classType) 
 	{
@@ -86,8 +121,6 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 			for(Resource res : resources)
 			{
 				reader = metadataReaderFactory.getMetadataReader(res);
-				reader.getClassMetadata().getClassName();
-				
 				if(isAssignableTo(classType, reader.getClassMetadata().getClassName()))
 				{
 					try {
@@ -139,7 +172,11 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 		if(StringUtils.hasText(className))
 		{
 			log.debug("Consumer class name specified- "+className);
-			_class = classForName(className);
+			try {
+				_class = classForName(className);
+			} catch (Throwable e) {
+				e.printStackTrace();
+			}
 		}
 		Assert.notNull(_class, "Unable to instantiate for className- "+className);
 		return newInstance(_class);
@@ -148,10 +185,11 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 	private static Class<?> classForName(String className)
 	{
 		try {
-			return ClassUtils.forName(className, null);
-		} catch (ClassNotFoundException | LinkageError e) {
-			return null;
+			return ClassUtils.getUserClass(ClassUtils.forName(className, null));
+		} catch (Throwable e) {
+			//e.printStackTrace();
 		}
+		return null;
 	}
 	/**
 	 * Get instance by type from Spring context.

@@ -20,20 +20,23 @@ import java.nio.ByteBuffer;
 import java.util.UUID;
 
 import org.reactivetechnologies.ticker.messaging.data.DataComparable;
+import org.reactivetechnologies.ticker.utils.TimeUIDSupport;
 
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 
-public class UUID1Key implements DataComparable<UUID> {
-
-	@Override
-	public int compareTo(UUID other) {
-		return compareTo(ByteBuffer.wrap(UUID1Support.decompose(value)), ByteBuffer.wrap(UUID1Support.decompose(other)));
-	}
+public class TimeUIDKey implements DataComparable<UUID> {
 
 	@Override
 	public void writeData(ObjectDataOutput out) throws IOException {
-		out.write(UUID1Support.decompose(value));
+		byte[] b = TimeUIDSupport.decompose(value);
+		if(b != null)
+		{
+			out.writeInt(b.length);
+			out.write(b);
+		}
+		else
+			out.writeInt(-1);
 	}
 
 	//http://grepcode.com/file_/repo1.maven.org/maven2/org.apache.cassandra/cassandra-all/2.0.0/org/apache/cassandra/db/marshal/TimeUUIDType.java/?v=source
@@ -84,13 +87,20 @@ public class UUID1Key implements DataComparable<UUID> {
     
 	@Override
 	public void readData(ObjectDataInput in) throws IOException {
-		value = UUID1Support.getUUID(ByteBuffer.wrap(in.readByteArray()));
+		int len = in.readInt();
+		if(len != -1)
+		{
+			byte[] b = new byte[len];
+			in.readFully(b);
+			value = TimeUIDSupport.getUUID(ByteBuffer.wrap(b));
+		}
+		
 	}
 
-	public UUID1Key() {
+	public TimeUIDKey() {
 	}
 
-	public UUID1Key(UUID value) {
+	public TimeUIDKey(UUID value) {
 		super();
 		this.value = value;
 	}
@@ -122,13 +132,18 @@ public class UUID1Key implements DataComparable<UUID> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		UUID1Key other = (UUID1Key) obj;
+		TimeUIDKey other = (TimeUIDKey) obj;
 		if (value == null) {
 			if (other.value != null)
 				return false;
 		} else if (!value.equals(other.value))
 			return false;
 		return true;
+	}
+
+	@Override
+	public int compareTo(DataComparable<UUID> other) {
+		return compareTo(ByteBuffer.wrap(TimeUIDSupport.decompose(value)), ByteBuffer.wrap(TimeUIDSupport.decompose(other.value())));
 	}
 
 }

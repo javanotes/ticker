@@ -22,7 +22,7 @@ import com.hazelcast.nio.serialization.DataSerializable;
  *
  * @param <T>
  */
-public interface DataComparable<T> extends Comparable<T>, DataSerializable{
+public interface DataComparable<T> extends Comparable<DataComparable<T>>, DataSerializable{
 
 	T value();
 }
