@@ -17,10 +17,12 @@ package org.reactivetechnologies.ticker.rest;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import org.reactivetechnologies.ticker.utils.ApplicationContextWrapper;
 import org.reactivetechnologies.ticker.utils.CommonHelper;
 import org.restexpress.RestExpress;
 import org.restexpress.route.Route;
@@ -57,8 +59,8 @@ class RestListener extends RestExpress {
 	
 	private static void printRoute(Route r)
 	{
-		if (log.isDebugEnabled()) {
-			log.debug(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + r.getAction().getDeclaringClass()
+		if (log.isInfoEnabled()) {
+			log.info(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + r.getAction().getDeclaringClass()
 					+ "::" + r.getAction().getName());
 		}
 	}
@@ -77,17 +79,62 @@ class RestListener extends RestExpress {
 	{
 		stopServer();
 	}
-	public void startServer()
+	@Autowired
+	private HandlerMappings mappings;
+	@Autowired
+	private ApplicationContextWrapper ctxWrapper;
+	
+	@SuppressWarnings("static-access")
+	private void mapHandlers()
 	{
-		setIoThreadCount(ioThreads);
-		setExecutorThreadCount(execThreads);
-		
-		List<Route> routes = uri(getBaseUrl()+URL_ADD, addService).build();
+		List<Route> routes;
+		for(Entry<String, String> e : mappings.getMappings().entrySet())
+		{
+			String path = e.getKey();
+			Object controller;
+			try {
+				Class<?> clazz = Class.forName(e.getValue());
+				controller = ctxWrapper.getInstance(clazz, null);
+			} catch (ClassNotFoundException e1) {
+				controller = ctxWrapper.getInstance(e.getValue());
+			}
+			
+			if(controller != null){
+				routes = uri(getBaseUrl()+path, controller).build();
+				printRoutes(routes);
+			}
+			else
+			{
+				log.error("Unable to bind path: "+path+" to controller: "+e.getValue());
+			}
+			
+		}
+	}
+	
+	private void mapDefaultHandlers()
+	{
+		List<Route> routes;
+		routes = uri(getBaseUrl()+URL_ADD, addService).build();
 		printRoutes(routes);
 		routes = uri(getBaseUrl()+URL_INGEST, ingestService).build();
 		printRoutes(routes);
 		routes = uri(getBaseUrl()+URL_APPEND, appendService).build();
 		printRoutes(routes);
+	}
+	public void startServer()
+	{
+		setIoThreadCount(ioThreads);
+		setExecutorThreadCount(execThreads);
+		
+		if(!mappings.getMappings().isEmpty())
+		{
+			log.debug("Found mappings: "+mappings.getMappings());
+			mapHandlers();
+		}
+		else
+		{
+			mapDefaultHandlers();
+		}
 		
 		bind();
 		log.info("REST transport started on port "+getPort());

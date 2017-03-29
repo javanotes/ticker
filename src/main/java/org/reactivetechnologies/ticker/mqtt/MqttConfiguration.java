@@ -33,6 +33,7 @@ import io.moquette.server.config.ResourceLoaderConfig;
 import io.moquette.spi.impl.ProtocolProcessorBootstrapper__;
 import io.moquette.spi.persistence.HazelcastPersistentStore;
 
+@ConditionalOnProperty(name = "mqtt.enable", havingValue = "true")
 @Configuration
 public class MqttConfiguration {
 

@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,9 +32,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+@ConditionalOnProperty(havingValue = "true", name = "rest.enable")
 @Configuration
 public class RestConfiguration {
 
+	@Bean
+	@ConfigurationProperties(prefix = "rest.server")
+	HandlerMappings mappings()
+	{
+		return new HandlerMappings();
+	}
 	static class ServiceExceptionMapper extends DefaultExceptionMapper
 	{
 		public static final String BADREQ_INV_JSON = "Not a valid json";

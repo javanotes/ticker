@@ -147,13 +147,14 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 	/**
 	 * Get instance by name from Spring context.
 	 * @param bean
+	 * @param args
 	 * @return
 	 */
-	public static <T> Object getInstance(String bean)
+	public static <T> Object getInstance(String bean, Object...args)
 	{
 		log.debug("Checking for a single matching consumer bean (by name) from Spring context");
 		try {
-			return context.getBean(bean);
+			return context.getBean(bean, args);
 		} catch (BeansException e) {
 			log.debug("No such class found in Spring context");
 		}

@@ -145,7 +145,7 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 					entry);
 			entryAdded(event);
 		}
-		log.info("Submitted pending entries with clearAll?"+clearAll);
+		log.debug("Submitted pending entries with clearAll?"+clearAll);
 	}
 
 	private void removeEntryListener()
@@ -248,7 +248,9 @@ class ConsumerSupervisorActor<T extends Data> extends UntypedActor implements En
 
 	@Override
 	public void entryAdded(EntryEvent<Serializable, T> event) {
-		log.debug("New entry received:: "+event);
+		if (log.isDebugEnabled()) {
+			log.debug("New entry received:: " + event);
+		}
 		onEntryEvent(event.getValue(), event.getKey());
 	}
 	

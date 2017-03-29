@@ -65,6 +65,8 @@ public class MessageContainerSupport extends AbstractMigratedPartitionListener i
 	@Autowired
 	private ActorSystem actors;
 
+	@Value("${container.deploy.auto:false}")
+	private boolean doRegister;
 	@Autowired
 	@Qualifier("containerActor")
 	private ActorRef containerActor;
@@ -112,8 +114,8 @@ public class MessageContainerSupport extends AbstractMigratedPartitionListener i
 	 * Start container if not already started.
 	 */
 	public void start() {
-		log.info("Container initialization signalled..");
 		containerActor.tell(new __RunRequest(), actors.guardian());
+		log.info("Message container initialization signalled..");
 	}
 
 	/**
@@ -172,10 +174,12 @@ public class MessageContainerSupport extends AbstractMigratedPartitionListener i
 		if (StringUtils.hasText(deployDir)) {
 			deployAndStart();
 		} else {
-			try {
-				registerAndStart();
-			} catch (IllegalArgumentException e) {
-				log.warn("*** No consumer found for deployment ***");
+			if (doRegister) {
+				try {
+					registerAndStart();
+				} catch (IllegalArgumentException e) {
+					log.warn("*** No consumer found for deployment ***");
+				} 
 			}
 
 		}
