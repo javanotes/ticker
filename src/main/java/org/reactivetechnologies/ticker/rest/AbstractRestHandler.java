@@ -138,7 +138,11 @@ public abstract class AbstractRestHandler implements RestHandler {
 	 * @return
 	 */
 	protected RequestBody parse(Request req, Response res) {
-		String queue = (String) req.getHeader(RestListener.URL_VAL_QNAME);
+		return parse(req, res, RestListener.URL_VAL_QNAME);
+	}
+	
+	protected RequestBody parse(Request req, Response res, String param) {
+		String queue = (String) req.getHeader(param);
 		Assert.notNull(queue);
 		
 		ByteBuffer bb = req.getBodyAsByteBuffer();
