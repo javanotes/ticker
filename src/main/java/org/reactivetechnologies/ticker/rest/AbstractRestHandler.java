@@ -15,20 +15,29 @@
  */
 package org.reactivetechnologies.ticker.rest;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeoutException;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.reactivetechnologies.ticker.messaging.base.Publisher;
+import org.reactivetechnologies.ticker.rest.RestConfiguration.ServiceExceptionMapper;
 import org.restexpress.Request;
 import org.restexpress.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.Assert;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-
-abstract class HandlerBase {
+/**
+ * Abstract base class for creating 'restlets'. 
+ * @author esutdal
+ *
+ */
+public abstract class AbstractRestHandler implements RestHandler {
 
 	protected static class RequestBody
 	{
@@ -40,57 +49,71 @@ abstract class HandlerBase {
 		public final String queue;
 		public final String body;
 	}
-	public HandlerBase() {
+	public AbstractRestHandler() {
 		super();
 	}
 
 	@Autowired
 	protected Publisher publisher;
-	/**
-	 * 	
-	 * @param request
-	 * @param response
-	 * @throws Exception
+	/* (non-Javadoc)
+	 * @see org.reactivetechnologies.ticker.rest.RestHandler#create(org.restexpress.Request, org.restexpress.Response)
 	 */
+	@Override
 	public void create(Request request, Response response) throws Exception
 	{
 		doPost(request, response);
 	}
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 * @throws Exception
+	/* (non-Javadoc)
+	 * @see org.reactivetechnologies.ticker.rest.RestHandler#read(org.restexpress.Request, org.restexpress.Response)
 	 */
+	@Override
 	public void read(Request request, Response response) throws Exception
 	{
-		
+		doGet(request, response);
 	}
+	
 	/**
-	 * 
+	 * Delegate method for GET method.
 	 * @param request
 	 * @param response
 	 * @throws Exception
+	 * <p>
+	 *  {@link JsonProcessingException},
+	 *  {@link IOException},
+	 *  {@link IllegalArgumentException} maps to HTTP 400 Bad Request.
+	 *  <p>
+	 *  {@link TimeoutException} maps to HTTP 408 Service Timeout, anything else maps to HTTP 500 Internal Server Error.
+	 *  @see ServiceExceptionMapper
 	 */
+	protected void doGet(Request request, Response response) throws Exception{}
+	/* (non-Javadoc)
+	 * @see org.reactivetechnologies.ticker.rest.RestHandler#update(org.restexpress.Request, org.restexpress.Response)
+	 */
+	@Override
 	public void update(Request request, Response response) throws Exception
 	{
 		
 	}
-	/**
-	 * 
-	 * @param request
-	 * @param response
-	 * @throws Exception
+	/* (non-Javadoc)
+	 * @see org.reactivetechnologies.ticker.rest.RestHandler#delete(org.restexpress.Request, org.restexpress.Response)
 	 */
+	@Override
 	public void delete(Request request, Response response) throws Exception
 	{
 		
 	}
 	/**
-	 * 
+	 * Delegate method for POST method.
 	 * @param request
 	 * @param response
 	 * @throws Exception
+	 * <p>
+	 *  {@link JsonProcessingException},
+	 *  {@link IOException},
+	 *  {@link IllegalArgumentException} maps to HTTP 400 Bad Request.
+	 *  <p>
+	 *  {@link TimeoutException} maps to HTTP 408 Service Timeout, anything else maps to HTTP 500 Internal Server Error.
+	 *  @see ServiceExceptionMapper
 	 */
 	protected abstract void doPost(Request request, Response response) throws Exception;
 	@Autowired
@@ -108,6 +131,12 @@ abstract class HandlerBase {
 			publisher.offer(d);
 		
 	}
+	/**
+	 * Parses a request based on target queue.
+	 * @param req
+	 * @param res
+	 * @return
+	 */
 	protected RequestBody parse(Request req, Response res) {
 		String queue = (String) req.getHeader(RestListener.URL_VAL_QNAME);
 		Assert.notNull(queue);

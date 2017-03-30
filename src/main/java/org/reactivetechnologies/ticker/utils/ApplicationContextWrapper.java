@@ -115,7 +115,8 @@ public class ApplicationContextWrapper implements ApplicationContextAware{
 		log.debug("Performing a full classpath scan to find a first matching class. This the final fallback..");
 		PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 		MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(resourceResolver);
-		try {
+		try 
+		{
 			Resource[] resources = resourceResolver.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX+DEFAULT_RESOURCE_PATTERN);
 			MetadataReader reader;
 			for(Resource res : resources)

@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 
-public class AddHandler extends HandlerBase {
+public class AddHandler extends AbstractRestHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(AddHandler.class);
 	
@@ -63,5 +63,10 @@ public class AddHandler extends HandlerBase {
 		RequestBody parsed = parse(request, response);
 		addJsonToQueue(parsed.queue, parsed.body, true);
 		response.setResponseStatus(HttpResponseStatus.CREATED);
+	}
+
+	@Override
+	public String url() {
+		return RestListener.URL_ADD;
 	}
 }

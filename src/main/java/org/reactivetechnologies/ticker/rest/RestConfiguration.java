@@ -42,7 +42,7 @@ public class RestConfiguration {
 	{
 		return new HandlerMappings();
 	}
-	static class ServiceExceptionMapper extends DefaultExceptionMapper
+	public static class ServiceExceptionMapper extends DefaultExceptionMapper
 	{
 		public static final String BADREQ_INV_JSON = "Not a valid json";
 		public static final String BADREQ_INV_TEXT = "Not a valid text";

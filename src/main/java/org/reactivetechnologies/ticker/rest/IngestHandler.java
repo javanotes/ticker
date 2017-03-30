@@ -38,7 +38,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author esutdal
  *
  */
-public class IngestHandler extends HandlerBase{
+public class IngestHandler extends AbstractRestHandler{
 
 	private static final Logger log = LoggerFactory.getLogger(AppendHandler.class);
 
@@ -81,6 +81,11 @@ public class IngestHandler extends HandlerBase{
 		RequestBody parsed = parse(request, response);
 		addJsonArrayToQueue(parsed.queue, parsed.body);
 		response.setResponseStatus(HttpResponseStatus.ACCEPTED);
+	}
+
+	@Override
+	public String url() {
+		return RestListener.URL_INGEST;
 	}
 
 

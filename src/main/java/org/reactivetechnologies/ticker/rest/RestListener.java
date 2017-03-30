@@ -57,17 +57,17 @@ class RestListener extends RestExpress {
 	@Autowired
 	private IngestHandler ingestService;
 	
-	private static void printRoute(Route r)
+	private static void printRoute(Route r, Class<? extends RestHandler> cls)
 	{
 		if (log.isInfoEnabled()) {
-			log.info(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + r.getAction().getDeclaringClass()
-					+ "::" + r.getAction().getName());
+			log.info(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + cls
+					+ " method " + r.getAction().getName());
 		}
 	}
-	private static void printRoutes(List<Route> r)
+	private static void printRoutes(List<Route> r, Class<? extends RestHandler> cls)
 	{
 		for(Route _r : r)
-			printRoute(_r);
+			printRoute(_r, cls);
 	}
 	@PostConstruct
 	void init()
@@ -84,42 +84,72 @@ class RestListener extends RestExpress {
 	@Autowired
 	private ApplicationContextWrapper ctxWrapper;
 	
+	/**
+	 * Try load a handler instance on a best effort basis.
+	 * @param key any unique identifier. May be a bean name, and will be considered as the last fallback in that case
+	 * @param value fully qualified class name, or spring bean name.
+	 * @return 
+	 */
 	@SuppressWarnings("static-access")
-	private void mapHandlers()
+	private boolean loadHandler(String key, String value)
 	{
-		List<Route> routes;
-		for(Entry<String, String> e : mappings.getMappings().entrySet())
+		RestHandler controller = null;
+		try 
 		{
-			String path = e.getKey();
-			Object controller;
-			try {
-				Class<?> clazz = Class.forName(e.getValue());
-				controller = ctxWrapper.getInstance(clazz, null);
-			} catch (ClassNotFoundException e1) {
-				controller = ctxWrapper.getInstance(e.getValue());
-			}
-			
-			if(controller != null){
-				routes = uri(getBaseUrl()+path, controller).build();
-				printRoutes(routes);
-			}
-			else
+			try 
 			{
-				log.error("Unable to bind path: "+path+" to controller: "+e.getValue());
+				//expecting value to be a fully qualified class name
+				@SuppressWarnings("unchecked")
+				Class<? extends RestHandler> clazz = (Class<? extends RestHandler>) Class.forName(value);
+				
+				//class loaded. now try to get an instance
+				controller = (RestHandler) ctxWrapper.getInstance(clazz, key);
+			} 
+			catch (ClassNotFoundException e1) {
+				//trying to load instance as Spring bean by name
+				controller = (RestHandler) ctxWrapper.getInstance(value);
 			}
-			
+		} 
+		catch (ClassCastException e1) {
+			log.error("Invalid controller class type", e1);
 		}
+		
+		
+		if(controller != null){
+			List<Route> routes = mapHandler(controller);
+			printRoutes(routes, controller.getClass());
+			return true;
+		}
+		else
+		{
+			log.error("Unable to bind request mapping '"+key+"' to controller: "+value+"!");
+		}
+		return false;
+		
 	}
 	
+	private boolean mapHandlers()
+	{
+		boolean loaded = false;
+		for(Entry<String, String> e : mappings.getMappings().entrySet())
+		{
+			loaded |= loadHandler(e.getKey(), e.getValue());
+		}
+		
+		return loaded;
+	}
+	private List<Route> mapHandler(RestHandler handler)
+	{
+		return uri(getBaseUrl()+handler.url(), handler).build();
+	}
 	private void mapDefaultHandlers()
 	{
-		List<Route> routes;
-		routes = uri(getBaseUrl()+URL_ADD, addService).build();
-		printRoutes(routes);
-		routes = uri(getBaseUrl()+URL_INGEST, ingestService).build();
-		printRoutes(routes);
-		routes = uri(getBaseUrl()+URL_APPEND, appendService).build();
-		printRoutes(routes);
+		List<Route> routes = mapHandler(addService);
+		printRoutes(routes, addService.getClass());
+		routes = mapHandler(ingestService);
+		printRoutes(routes, ingestService.getClass());
+		routes = mapHandler(appendService);
+		printRoutes(routes, appendService.getClass());
 	}
 	public void startServer()
 	{
