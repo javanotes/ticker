@@ -85,14 +85,14 @@ public abstract class AbstractRestHandler implements RestHandler {
 	 *  {@link TimeoutException} maps to HTTP 408 Service Timeout, anything else maps to HTTP 500 Internal Server Error.
 	 *  @see ServiceExceptionMapper
 	 */
-	protected void doGet(Request request, Response response) throws Exception{}
+	protected void doGet(Request request, Response response) throws Exception{response.setResponseNoContent();}
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.rest.RestHandler#update(org.restexpress.Request, org.restexpress.Response)
 	 */
 	@Override
 	public void update(Request request, Response response) throws Exception
 	{
-		
+		response.setResponseNoContent();
 	}
 	/* (non-Javadoc)
 	 * @see org.reactivetechnologies.ticker.rest.RestHandler#delete(org.restexpress.Request, org.restexpress.Response)
@@ -100,7 +100,7 @@ public abstract class AbstractRestHandler implements RestHandler {
 	@Override
 	public void delete(Request request, Response response) throws Exception
 	{
-		
+		response.setResponseNoContent();
 	}
 	/**
 	 * Delegate method for POST method.

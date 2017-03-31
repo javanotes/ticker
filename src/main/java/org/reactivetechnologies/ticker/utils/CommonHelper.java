@@ -20,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.reactivetechnologies.ticker.messaging.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,8 +93,12 @@ public class CommonHelper {
 	public byte[] marshall(DataSerializable d) throws IOException
 	{
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-		ObjectDataOutput out = new ObjectDataOutputStream(bytes, serializeService);
-		d.writeData(out);
+		try (GZIPOutputStream zipped = new GZIPOutputStream(bytes)){
+			ObjectDataOutput out = new ObjectDataOutputStream(zipped, serializeService);
+			d.writeData(out);
+		} finally {
+			
+		}
 		return bytes.toByteArray();
 	}
 	/**
@@ -103,8 +109,11 @@ public class CommonHelper {
 	 */
 	public void unmarshall(byte[] b, DataSerializable ser) throws IOException
 	{
-		ObjectDataInputStream in = new ObjectDataInputStream(new ByteArrayInputStream(b), serializeService);
-		ser.readData(in);
+		try(GZIPInputStream zipped = new GZIPInputStream(new ByteArrayInputStream(b))) {
+			ObjectDataInputStream in = new ObjectDataInputStream(zipped, serializeService);
+			ser.readData(in);
+		} finally {
+		}
 		
 	}
 	

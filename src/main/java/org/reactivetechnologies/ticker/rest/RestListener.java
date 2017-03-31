@@ -59,15 +59,20 @@ class RestListener extends RestExpress {
 	
 	private static void printRoute(Route r, Class<? extends RestHandler> cls)
 	{
-		if (log.isInfoEnabled()) {
-			log.info(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + cls
+		if (log.isDebugEnabled()) {
+			log.debug(r.getMethod() + " [" + r.getPattern() + "] mapped to action " + cls
 					+ " method " + r.getAction().getName());
 		}
 	}
 	private static void printRoutes(List<Route> r, Class<? extends RestHandler> cls)
 	{
-		for(Route _r : r)
+		Route _r = null;
+		for (int i = 0; i < r.size(); i++) {
+			_r = r.get(i);
 			printRoute(_r, cls);
+		}
+		
+		log.info(" [" + _r.getPattern() + "] mapped to action " + cls);
 	}
 	@PostConstruct
 	void init()
@@ -122,9 +127,8 @@ class RestListener extends RestExpress {
 		}
 		else
 		{
-			log.error("Unable to bind request mapping '"+key+"' to controller: "+value+"!");
+			throw new IllegalArgumentException("Unable to bind request mapping '"+key+"' to controller: "+value+"!");
 		}
-		return false;
 		
 	}
 	
